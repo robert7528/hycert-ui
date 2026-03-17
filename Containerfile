@@ -1,8 +1,12 @@
 FROM oven/bun:1-alpine AS deps
 
 WORKDIR /app
+COPY hyui-kit/ ./hyui-kit/
 COPY package.json bun.lock* ./
-RUN bun install --frozen-lockfile || bun install
+# CI: hyui-kit is in ./hyui-kit (checked out by workflow)
+# Local: file:../hyui-kit — adjust path for Docker context
+RUN sed -i 's|file:../hyui-kit|file:./hyui-kit|' package.json && \
+    (bun install --frozen-lockfile || bun install)
 
 FROM node:20-alpine AS builder
 

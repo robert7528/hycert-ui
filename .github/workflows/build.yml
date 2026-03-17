@@ -19,6 +19,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Checkout hyui-kit
+        uses: actions/checkout@v4
+        with:
+          repository: robert7528/hyui-kit
+          path: hyui-kit
+
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
