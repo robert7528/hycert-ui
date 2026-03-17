@@ -1,7 +1,7 @@
 'use client'
 
 import { useLocale } from '@/contexts/locale-context'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent } from '@hysp/ui-kit'
 
 export function CertList() {
   const { t } = useLocale()

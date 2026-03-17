@@ -1,6 +1,7 @@
 import Cookies from 'js-cookie'
+import { PLATFORM_STORAGE_KEYS, type ApiResponse } from '@hysp/ui-kit'
 
-const TOKEN_KEY = 'hyadmin_token'
+const TOKEN_KEY = PLATFORM_STORAGE_KEYS.COOKIE.TOKEN
 let _apiBase = '/hycert-api'
 
 /** Set the cert API base URL */
@@ -11,13 +12,6 @@ export function setCertApiBase(base: string) {
 function getToken(): string | null {
   if (typeof window === 'undefined') return null
   return sessionStorage.getItem(TOKEN_KEY) ?? Cookies.get(TOKEN_KEY) ?? null
-}
-
-interface ApiResponse<T> {
-  success: boolean
-  data: T
-  warnings?: { code: string; message: string }[]
-  error?: { code: string; message: string }
 }
 
 async function certFetch<T>(path: string, init: RequestInit = {}): Promise<ApiResponse<T>> {

@@ -2,14 +2,12 @@
 
 import { useState, useRef, useCallback } from 'react'
 import { useLocale } from '@/contexts/locale-context'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Separator } from '@/components/ui/separator'
+import {
+  Card, CardContent, CardHeader, CardTitle, CardDescription,
+  Button, Textarea, Input, Label, Badge,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Separator,
+} from '@hysp/ui-kit'
 import { Loader2, ShieldCheck, FileSearch, ArrowRightLeft, FileKey, Upload, Download } from 'lucide-react'
 import { certUtilityApi, type VerifyResponse, type ParseResponse, type ConvertResponse, type GenerateCSRResponse } from '@/lib/cert-api'
 
