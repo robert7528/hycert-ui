@@ -1,0 +1,30 @@
+# Podman Quadlet - HySP Certificate UI
+#
+# 安裝方式：
+#   sudo cp hycert-ui.container /etc/containers/systemd/hycert-ui.container
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now hycert-ui
+#
+# 之後操作：
+#   sudo systemctl restart hycert-ui
+#   sudo systemctl status hycert-ui
+#   sudo journalctl -u hycert-ui -f
+
+[Unit]
+Description=HySP Certificate UI (Next.js)
+After=network.target
+
+[Container]
+Image=ghcr.io/robert7528/hycert-ui:latest
+# 只對 localhost 開放，由 nginx 反向代理
+PublishPort=127.0.0.1:3002:3000
+LogDriver=journald
+
+[Service]
+Restart=always
+RestartSec=5
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+[Install]
+WantedBy=multi-user.target
