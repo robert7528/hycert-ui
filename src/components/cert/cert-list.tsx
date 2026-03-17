@@ -10,7 +10,7 @@ export function CertList() {
     <Card>
       <CardContent className="pt-6">
         <p className="text-muted-foreground text-sm text-center py-8">
-          {t.cert_toolbox.list_coming_soon}
+          {t.hycert.certList.comingSoon}
         </p>
       </CardContent>
     </Card>

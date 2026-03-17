@@ -94,13 +94,14 @@ function FileUploadButton({ onLoad, accept, label }: { onLoad: (result: FileUplo
 export function CertToolbox() {
   const { t } = useLocale()
   const [activeTool, setActiveTool] = useState<Tool>('verify')
-  const ct = t.cert_toolbox
+  const { toolbox } = t.hycert
+  const { verify, parse, convert, generateCsr } = toolbox
 
   const tools: { key: Tool; icon: React.ReactNode; label: string; desc: string }[] = [
-    { key: 'verify', icon: <ShieldCheck className="h-4 w-4" />, label: ct.verify, desc: ct.verify_desc },
-    { key: 'parse', icon: <FileSearch className="h-4 w-4" />, label: ct.parse, desc: ct.parse_desc },
-    { key: 'convert', icon: <ArrowRightLeft className="h-4 w-4" />, label: ct.convert, desc: ct.convert_desc },
-    { key: 'generate-csr', icon: <FileKey className="h-4 w-4" />, label: ct.generate_csr, desc: ct.generate_csr_desc },
+    { key: 'verify', icon: <ShieldCheck className="h-4 w-4" />, label: verify.title, desc: verify.description },
+    { key: 'parse', icon: <FileSearch className="h-4 w-4" />, label: parse.title, desc: parse.description },
+    { key: 'convert', icon: <ArrowRightLeft className="h-4 w-4" />, label: convert.title, desc: convert.description },
+    { key: 'generate-csr', icon: <FileKey className="h-4 w-4" />, label: generateCsr.title, desc: generateCsr.description },
   ]
 
   return (
@@ -132,7 +133,7 @@ export function CertToolbox() {
 
 function VerifyTool() {
   const { t } = useLocale()
-  const ct = t.cert_toolbox
+  const { common, verify, result: res } = t.hycert.toolbox
   const [cert, setCert] = useState('')
   const [inputType, setInputType] = useState('')
   const [password, setPassword] = useState('')
@@ -158,13 +159,13 @@ function VerifyTool() {
     setError('')
     setResult(null)
     try {
-      const res = await certUtilityApi.verify({
+      const apiRes = await certUtilityApi.verify({
         certificate: cert,
         private_key: privateKey || undefined,
         input_type: inputType || undefined,
         password: password || undefined,
       })
-      setResult(res.data)
+      setResult(apiRes.data)
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Unknown error')
     } finally {
@@ -176,14 +177,14 @@ function VerifyTool() {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">{ct.verify}</CardTitle>
-          <CardDescription>{ct.verify_desc}</CardDescription>
+          <CardTitle className="text-base">{verify.title}</CardTitle>
+          <CardDescription>{verify.description}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <Label>{ct.certificate_pem}</Label>
-              <FileUploadButton label={ct.upload_file} onLoad={handleFileUpload} />
+              <Label>{common.labelCertificate}</Label>
+              <FileUploadButton label={common.buttonUpload} onLoad={handleFileUpload} />
             </div>
             {isBinary && uploadedFilename ? (
               <div className="rounded-md border p-3 text-sm text-muted-foreground font-mono">{uploadedFilename}</div>
@@ -199,19 +200,19 @@ function VerifyTool() {
           </div>
           {isPfx && (
             <div className="space-y-1.5">
-              <Label>{ct.pfx_password}</Label>
+              <Label>{common.labelPfxPassword}</Label>
               <Input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder={ct.pfx_password_placeholder}
+                placeholder={common.placeholderPfxPassword}
               />
             </div>
           )}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <Label>{ct.private_key_optional}</Label>
-              <FileUploadButton accept=".key,.pem" label={ct.upload_file} onLoad={(r) => setPrivateKey(r.content)} />
+              <Label>{common.labelPrivateKey}</Label>
+              <FileUploadButton accept=".key,.pem" label={common.buttonUpload} onLoad={(r) => setPrivateKey(r.content)} />
             </div>
             <Textarea
               rows={4}
@@ -223,7 +224,7 @@ function VerifyTool() {
           </div>
           <Button onClick={handleVerify} disabled={loading || !cert.trim()} className="w-full">
             {loading && <Loader2 className="h-4 w-4 animate-spin mr-1.5" />}
-            {ct.run_verify}
+            {verify.buttonRun}
           </Button>
           {error && <p className="text-sm text-destructive">{error}</p>}
         </CardContent>
@@ -232,21 +233,21 @@ function VerifyTool() {
       {result && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">{ct.result}</CardTitle>
+            <CardTitle className="text-base">{res.title}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
-            <Section title={ct.subject}>
+            <Section title={res.subject}>
               <Row label="CN" value={result.subject.cn} />
               {result.subject.o && <Row label="O" value={result.subject.o} />}
             </Section>
-            <Section title={ct.validity}>
-              <Row label={ct.not_before} value={result.validity.not_before} />
-              <Row label={ct.not_after} value={result.validity.not_after} />
+            <Section title={res.validity}>
+              <Row label={res.notBefore} value={result.validity.not_before} />
+              <Row label={res.notAfter} value={result.validity.not_after} />
               <Row
-                label={ct.days_remaining}
+                label={res.daysRemaining}
                 value={
                   <Badge variant={result.validity.is_expired ? 'destructive' : result.validity.days_remaining < 30 ? 'secondary' : 'default'}>
-                    {result.validity.is_expired ? ct.expired : `${result.validity.days_remaining} ${ct.days}`}
+                    {result.validity.is_expired ? res.expired : `${result.validity.days_remaining} ${res.days}`}
                   </Badge>
                 }
               />
@@ -259,23 +260,23 @@ function VerifyTool() {
                   ))}
                 </div>
               ) : (
-                <span className="text-muted-foreground">{ct.none}</span>
+                <span className="text-muted-foreground">{res.none}</span>
               )}
             </Section>
-            <Section title={ct.key_info}>
-              <Row label={ct.algorithm} value={result.key_info.algorithm} />
-              <Row label={ct.bits} value={String(result.key_info.bits)} />
+            <Section title={res.keyInfo}>
+              <Row label={res.algorithm} value={result.key_info.algorithm} />
+              <Row label={res.bits} value={String(result.key_info.bits)} />
             </Section>
-            <Section title={ct.chain_status}>
-              <Row label={ct.chain_valid} value={<StatusBadge ok={result.checks.chain_valid} />} />
-              <Row label={ct.chain_complete} value={<StatusBadge ok={result.checks.chain_complete} />} />
-              <Row label={ct.root_trusted} value={<StatusBadge ok={result.checks.root_trusted} />} />
+            <Section title={res.chainStatus}>
+              <Row label={res.chainValid} value={<StatusBadge ok={result.checks.chain_valid} />} />
+              <Row label={res.chainComplete} value={<StatusBadge ok={result.checks.chain_complete} />} />
+              <Row label={res.rootTrusted} value={<StatusBadge ok={result.checks.root_trusted} />} />
               {result.checks.key_pair_match !== null && (
-                <Row label={ct.key_match} value={<StatusBadge ok={result.checks.key_pair_match} />} />
+                <Row label={res.keyMatch} value={<StatusBadge ok={result.checks.key_pair_match} />} />
               )}
             </Section>
             {result.chain.length > 0 && (
-              <Section title={ct.chain_detail}>
+              <Section title={res.chainDetail}>
                 {result.chain.map((node) => (
                   <div key={node.index} className="flex items-center gap-2 text-xs">
                     <Badge variant="outline" className="shrink-0">{node.role}</Badge>
@@ -286,13 +287,13 @@ function VerifyTool() {
               </Section>
             )}
             {result.warnings && result.warnings.length > 0 && (
-              <Section title={ct.warnings}>
+              <Section title={res.warnings}>
                 {result.warnings.map((w, i) => (
                   <p key={i} className="text-yellow-600 dark:text-yellow-400 text-xs">{w.code}: {w.message}</p>
                 ))}
               </Section>
             )}
-            <Section title={ct.fingerprint}>
+            <Section title={res.fingerprint}>
               <Row label="SHA-256" value={<span className="font-mono text-xs break-all">{result.fingerprint.sha256}</span>} />
               <Row label="SHA-1" value={<span className="font-mono text-xs break-all">{result.fingerprint.sha1}</span>} />
             </Section>
@@ -307,7 +308,7 @@ function VerifyTool() {
 
 function ParseTool() {
   const { t } = useLocale()
-  const ct = t.cert_toolbox
+  const { common, parse, result: res } = t.hycert.toolbox
   const [input, setInput] = useState('')
   const [inputType, setInputType] = useState('')
   const [password, setPassword] = useState('')
@@ -331,12 +332,12 @@ function ParseTool() {
     setError('')
     setResult(null)
     try {
-      const res = await certUtilityApi.parse({
+      const apiRes = await certUtilityApi.parse({
         input,
         input_type: inputType || undefined,
         password: password || undefined,
       })
-      setResult(res.data)
+      setResult(apiRes.data)
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Unknown error')
     } finally {
@@ -348,14 +349,14 @@ function ParseTool() {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">{ct.parse}</CardTitle>
-          <CardDescription>{ct.parse_desc}</CardDescription>
+          <CardTitle className="text-base">{parse.title}</CardTitle>
+          <CardDescription>{parse.description}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <Label>{ct.certificate_pem}</Label>
-              <FileUploadButton label={ct.upload_file} onLoad={handleFileUpload} />
+              <Label>{common.labelCertificate}</Label>
+              <FileUploadButton label={common.buttonUpload} onLoad={handleFileUpload} />
             </div>
             {isPfx && uploadedFilename ? (
               <div className="rounded-md border p-3 text-sm text-muted-foreground font-mono">{uploadedFilename}</div>
@@ -371,18 +372,18 @@ function ParseTool() {
           </div>
           {isPfx && (
             <div className="space-y-1.5">
-              <Label>{ct.pfx_password}</Label>
+              <Label>{common.labelPfxPassword}</Label>
               <Input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder={ct.pfx_password_placeholder}
+                placeholder={common.placeholderPfxPassword}
               />
             </div>
           )}
           <Button onClick={handleParse} disabled={loading || !input.trim()} className="w-full">
             {loading && <Loader2 className="h-4 w-4 animate-spin mr-1.5" />}
-            {ct.run_parse}
+            {parse.buttonRun}
           </Button>
           {error && <p className="text-sm text-destructive">{error}</p>}
         </CardContent>
@@ -391,10 +392,10 @@ function ParseTool() {
       {result && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">{ct.result}</CardTitle>
+            <CardTitle className="text-base">{res.title}</CardTitle>
             <CardDescription>
-              {ct.format}: {result.format}
-              {result.has_private_key && <Badge variant="secondary" className="ml-2">{ct.has_private_key}</Badge>}
+              {res.format}: {result.format}
+              {result.has_private_key && <Badge variant="secondary" className="ml-2">{res.hasPrivateKey}</Badge>}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
@@ -405,18 +406,18 @@ function ParseTool() {
                   <span className="font-medium">{cert.subject.cn}</span>
                   {cert.is_ca && <Badge variant="secondary">CA</Badge>}
                 </div>
-                <Row label={ct.issuer} value={cert.issuer.cn} />
-                <Row label={ct.serial} value={<span className="font-mono text-xs">{cert.serial_number}</span>} />
-                <Row label={ct.not_after} value={cert.validity.not_after} />
+                <Row label={res.issuer} value={cert.issuer.cn} />
+                <Row label={res.serial} value={<span className="font-mono text-xs">{cert.serial_number}</span>} />
+                <Row label={res.notAfter} value={cert.validity.not_after} />
                 <Row
-                  label={ct.days_remaining}
+                  label={res.daysRemaining}
                   value={
                     <Badge variant={cert.validity.is_expired ? 'destructive' : cert.validity.days_remaining < 30 ? 'secondary' : 'default'}>
-                      {cert.validity.is_expired ? ct.expired : `${cert.validity.days_remaining} ${ct.days}`}
+                      {cert.validity.is_expired ? res.expired : `${cert.validity.days_remaining} ${res.days}`}
                     </Badge>
                   }
                 />
-                <Row label={ct.algorithm} value={`${cert.key_info.algorithm} ${cert.key_info.bits}-bit`} />
+                <Row label={res.algorithm} value={`${cert.key_info.algorithm} ${cert.key_info.bits}-bit`} />
                 {cert.sans.dns?.length ? (
                   <div>
                     <span className="text-muted-foreground">SANs: </span>
@@ -436,7 +437,7 @@ function ParseTool() {
 
 function ConvertTool() {
   const { t } = useLocale()
-  const ct = t.cert_toolbox
+  const { common, convert, result: res } = t.hycert.toolbox
   const [cert, setCert] = useState('')
   const [inputType, setInputType] = useState('')
   const [inputPassword, setInputPassword] = useState('')
@@ -465,7 +466,7 @@ function ConvertTool() {
     setError('')
     setResult(null)
     try {
-      const res = await certUtilityApi.convert({
+      const apiRes = await certUtilityApi.convert({
         certificate: cert,
         private_key: privateKey || undefined,
         input_type: inputType || undefined,
@@ -473,7 +474,7 @@ function ConvertTool() {
         target_format: targetFormat,
         options: password ? { password } : undefined,
       })
-      setResult(res.data)
+      setResult(apiRes.data)
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Unknown error')
     } finally {
@@ -499,14 +500,14 @@ function ConvertTool() {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">{ct.convert}</CardTitle>
-          <CardDescription>{ct.convert_desc}</CardDescription>
+          <CardTitle className="text-base">{convert.title}</CardTitle>
+          <CardDescription>{convert.description}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <Label>{ct.certificate_pem}</Label>
-              <FileUploadButton label={ct.upload_file} onLoad={handleFileUpload} />
+              <Label>{common.labelCertificate}</Label>
+              <FileUploadButton label={common.buttonUpload} onLoad={handleFileUpload} />
             </div>
             {isInputBinary && uploadedFilename ? (
               <div className="rounded-md border p-3 text-sm text-muted-foreground font-mono">{uploadedFilename}</div>
@@ -522,19 +523,19 @@ function ConvertTool() {
           </div>
           {isInputPfx && (
             <div className="space-y-1.5">
-              <Label>{ct.input_pfx_password ?? ct.pfx_password}</Label>
+              <Label>{common.labelInputPfxPassword}</Label>
               <Input
                 type="password"
                 value={inputPassword}
                 onChange={(e) => setInputPassword(e.target.value)}
-                placeholder={ct.pfx_password_placeholder}
+                placeholder={common.placeholderPfxPassword}
               />
             </div>
           )}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <Label>{ct.private_key_optional}</Label>
-              <FileUploadButton accept=".key,.pem" label={ct.upload_file} onLoad={(r) => setPrivateKey(r.content)} />
+              <Label>{common.labelPrivateKey}</Label>
+              <FileUploadButton accept=".key,.pem" label={common.buttonUpload} onLoad={(r) => setPrivateKey(r.content)} />
             </div>
             <Textarea
               rows={4}
@@ -545,7 +546,7 @@ function ConvertTool() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label>{ct.target_format}</Label>
+            <Label>{convert.labelTargetFormat}</Label>
             <Select value={targetFormat} onValueChange={setTargetFormat}>
               <SelectTrigger>
                 <SelectValue />
@@ -560,22 +561,22 @@ function ConvertTool() {
             </Select>
           </div>
           {targetFormat === 'p7b' && (
-            <p className="text-xs text-muted-foreground">{ct.p7b_no_key_hint ?? 'P7B only contains certificates, private key is not included.'}</p>
+            <p className="text-xs text-muted-foreground">{convert.hintP7bNoKey}</p>
           )}
           {needsOutputPassword && (
             <div className="space-y-1.5">
-              <Label>{ct.output_password ?? ct.pfx_password}</Label>
+              <Label>{common.labelOutputPassword}</Label>
               <Input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder={ct.pfx_password_placeholder}
+                placeholder={common.placeholderPfxPassword}
               />
             </div>
           )}
           <Button onClick={handleConvert} disabled={loading || !cert.trim()} className="w-full">
             {loading && <Loader2 className="h-4 w-4 animate-spin mr-1.5" />}
-            {ct.run_convert}
+            {convert.buttonRun}
           </Button>
           {error && <p className="text-sm text-destructive">{error}</p>}
         </CardContent>
@@ -584,15 +585,15 @@ function ConvertTool() {
       {result && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">{ct.result}</CardTitle>
+            <CardTitle className="text-base">{res.title}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
-            <Row label={ct.format} value={result.format} />
-            <Row label={ct.filename} value={result.filename_suggestion} />
-            <Row label={ct.chain_included_label} value={result.chain_included ? ct.yes : ct.no} />
+            <Row label={res.format} value={result.format} />
+            <Row label={convert.labelFilename} value={result.filename_suggestion} />
+            <Row label={convert.labelChainIncluded} value={result.chain_included ? convert.yes : convert.no} />
             <Button variant="outline" onClick={handleDownload} className="w-full gap-1.5">
               <Download className="h-3.5 w-3.5" />
-              {ct.download}
+              {common.buttonDownload}
             </Button>
           </CardContent>
         </Card>
@@ -605,7 +606,7 @@ function ConvertTool() {
 
 function GenerateCSRTool() {
   const { t } = useLocale()
-  const ct = t.cert_toolbox
+  const { common, generateCsr, result: res } = t.hycert.toolbox
   const [domain, setDomain] = useState('')
   const [sans, setSans] = useState('')
   const [org, setOrg] = useState('')
@@ -623,14 +624,14 @@ function GenerateCSRTool() {
     setResult(null)
     try {
       const sansList = sans.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean)
-      const res = await certUtilityApi.generateCSR({
+      const apiRes = await certUtilityApi.generateCSR({
         domain,
         sans: sansList.length ? sansList : undefined,
         subject: (org || country) ? { o: org || undefined, c: country || undefined } : undefined,
         key_type: keyType,
         key_bits: parseInt(keyBits),
       })
-      setResult(res.data)
+      setResult(apiRes.data)
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Unknown error')
     } finally {
@@ -646,12 +647,12 @@ function GenerateCSRTool() {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">{ct.generate_csr}</CardTitle>
-          <CardDescription>{ct.generate_csr_desc}</CardDescription>
+          <CardTitle className="text-base">{generateCsr.title}</CardTitle>
+          <CardDescription>{generateCsr.description}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="space-y-1.5">
-            <Label>{ct.domain} *</Label>
+            <Label>{generateCsr.labelDomain} *</Label>
             <Input
               value={domain}
               onChange={(e) => setDomain(e.target.value)}
@@ -659,7 +660,7 @@ function GenerateCSRTool() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label>{ct.sans_label}</Label>
+            <Label>{generateCsr.labelSans}</Label>
             <Textarea
               rows={3}
               value={sans}
@@ -670,17 +671,17 @@ function GenerateCSRTool() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>{ct.organization}</Label>
+              <Label>{generateCsr.labelOrganization}</Label>
               <Input value={org} onChange={(e) => setOrg(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label>{ct.country}</Label>
+              <Label>{generateCsr.labelCountry}</Label>
               <Input value={country} onChange={(e) => setCountry(e.target.value)} placeholder="TW" maxLength={2} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>{ct.key_type}</Label>
+              <Label>{generateCsr.labelKeyType}</Label>
               <Select value={keyType} onValueChange={setKeyType}>
                 <SelectTrigger>
                   <SelectValue />
@@ -692,7 +693,7 @@ function GenerateCSRTool() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>{ct.key_size}</Label>
+              <Label>{generateCsr.labelKeySize}</Label>
               <Select value={keyBits} onValueChange={setKeyBits}>
                 <SelectTrigger>
                   <SelectValue />
@@ -715,7 +716,7 @@ function GenerateCSRTool() {
           </div>
           <Button onClick={handleGenerate} disabled={loading || !domain.trim()} className="w-full">
             {loading && <Loader2 className="h-4 w-4 animate-spin mr-1.5" />}
-            {ct.run_generate}
+            {generateCsr.buttonRun}
           </Button>
           {error && <p className="text-sm text-destructive">{error}</p>}
         </CardContent>
@@ -724,7 +725,7 @@ function GenerateCSRTool() {
       {result && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">{ct.result}</CardTitle>
+            <CardTitle className="text-base">{res.title}</CardTitle>
             <CardDescription>
               {result.key_type.toUpperCase()} {result.key_bits}-bit
               {result.warning && <span className="text-yellow-600 dark:text-yellow-400 ml-2">{result.warning}</span>}
@@ -736,7 +737,7 @@ function GenerateCSRTool() {
                 <Label>CSR (PEM)</Label>
                 <div className="flex gap-1">
                   <Button variant="ghost" size="sm" onClick={() => copyToClipboard(result.csr_pem)}>
-                    {ct.copy}
+                    {common.buttonCopy}
                   </Button>
                   <Button variant="ghost" size="sm" onClick={() => downloadTextFile(result.csr_pem, `${domain || 'certificate'}.csr`)} className="gap-1">
                     <Download className="h-3.5 w-3.5" />
@@ -748,10 +749,10 @@ function GenerateCSRTool() {
             </div>
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <Label>{ct.private_key_label}</Label>
+                <Label>{common.labelPrivateKeyFull}</Label>
                 <div className="flex gap-1">
                   <Button variant="ghost" size="sm" onClick={() => copyToClipboard(result.private_key_pem)}>
-                    {ct.copy}
+                    {common.buttonCopy}
                   </Button>
                   <Button variant="ghost" size="sm" onClick={() => downloadTextFile(result.private_key_pem, `${domain || 'certificate'}.key`)} className="gap-1">
                     <Download className="h-3.5 w-3.5" />
