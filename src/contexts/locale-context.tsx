@@ -1,7 +1,7 @@
 'use client'
 
-import { LocaleProvider as BaseLocaleProvider, useLocale } from '@hysp/ui-kit'
-import { locales } from '@/i18n'
+import { LocaleProvider as BaseLocaleProvider, useLocale as baseUseLocale } from '@hysp/ui-kit'
+import { locales, type Dictionary } from '@/i18n'
 
 export function LocaleProvider({ children }: { children: React.ReactNode }) {
   return (
@@ -11,4 +11,6 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
   )
 }
 
-export { useLocale }
+export function useLocale() {
+  return baseUseLocale<Dictionary>()
+}
