@@ -30,6 +30,8 @@ function detectInputType(filename: string): string {
   const lower = filename.toLowerCase()
   if (lower.endsWith('.pfx') || lower.endsWith('.p12')) return 'pfx_base64'
   if (lower.endsWith('.der')) return 'der_base64'
+  if (lower.endsWith('.jks')) return 'jks_base64'
+  if (lower.endsWith('.p7b')) return 'p7b_base64'
   return ''
 }
 
@@ -171,8 +173,8 @@ function VerifyTool() {
   const [error, setError] = useState('')
   const [result, setResult] = useState<VerifyResponse | null>(null)
 
-  const isPfx = inputType === 'pfx_base64'
-  const isBinary = inputType === 'pfx_base64' || inputType === 'der_base64'
+  const needsPassword = inputType === 'pfx_base64' || inputType === 'jks_base64'
+  const isBinary = inputType === 'pfx_base64' || inputType === 'der_base64' || inputType === 'jks_base64' || inputType === 'p7b_base64'
 
   const handleFileUpload = (r: FileUploadResult) => {
     setCert(r.content)
@@ -226,7 +228,7 @@ function VerifyTool() {
               />
             )}
           </div>
-          {isPfx && (
+          {needsPassword && (
             <div className="space-y-1.5">
               <Label>{common.labelPfxPassword}</Label>
               <Input
@@ -345,7 +347,8 @@ function ParseTool() {
   const [error, setError] = useState('')
   const [result, setResult] = useState<ParseResponse | null>(null)
 
-  const isPfx = inputType === 'pfx_base64'
+  const needsPassword = inputType === 'pfx_base64' || inputType === 'jks_base64'
+  const isBinary = inputType === 'pfx_base64' || inputType === 'der_base64' || inputType === 'jks_base64' || inputType === 'p7b_base64'
 
   const handleFileUpload = (r: FileUploadResult) => {
     setInput(r.content)
@@ -386,7 +389,7 @@ function ParseTool() {
               <Label>{common.labelCertificate}</Label>
               <FileUploadButton label={common.buttonUpload} onLoad={handleFileUpload} />
             </div>
-            {isPfx && uploadedFilename ? (
+            {isBinary && uploadedFilename ? (
               <div className="rounded-md border p-3 text-sm text-muted-foreground font-mono">{uploadedFilename}</div>
             ) : (
               <Textarea
@@ -398,7 +401,7 @@ function ParseTool() {
               />
             )}
           </div>
-          {isPfx && (
+          {needsPassword && (
             <div className="space-y-1.5">
               <Label>{common.labelPfxPassword}</Label>
               <Input
@@ -477,7 +480,7 @@ function ConvertTool() {
   const [error, setError] = useState('')
   const [result, setResult] = useState<ConvertResponse | null>(null)
 
-  const isInputPfx = inputType === 'pfx_base64'
+  const isInputNeedsPassword = inputType === 'pfx_base64' || inputType === 'jks_base64'
   const isInputBinary = inputType === 'pfx_base64' || inputType === 'der_base64'
   const needsOutputPassword = targetFormat === 'pfx' || targetFormat === 'jks'
 
@@ -549,7 +552,7 @@ function ConvertTool() {
               />
             )}
           </div>
-          {isInputPfx && (
+          {isInputNeedsPassword && (
             <div className="space-y-1.5">
               <Label>{common.labelInputPfxPassword}</Label>
               <Input
