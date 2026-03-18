@@ -14,19 +14,45 @@ import { certUtilityApi, type VerifyResponse, type ParseResponse, type ConvertRe
 type Tool = 'verify' | 'parse' | 'convert' | 'generate-csr'
 
 const CERT_ACCEPT = '.pem,.cer,.crt,.der,.pfx,.p12,.jks,.p7b,.key,.csr'
-const BINARY_EXTS = ['.pfx', '.p12', '.der', '.cer', '.jks', '.p7b']
+const BINARY_EXTS = ['.pfx', '.p12', '.der', '.jks', '.p7b']
 
-function isBinaryFile(filename: string): boolean {
+function isBinaryExt(filename: string): boolean {
   const lower = filename.toLowerCase()
   return BINARY_EXTS.some((ext) => lower.endsWith(ext))
+}
+
+function isAmbiguousExt(filename: string): boolean {
+  const lower = filename.toLowerCase()
+  return lower.endsWith('.cer') || lower.endsWith('.crt')
 }
 
 function detectInputType(filename: string): string {
   const lower = filename.toLowerCase()
   if (lower.endsWith('.pfx') || lower.endsWith('.p12')) return 'pfx_base64'
   if (lower.endsWith('.der')) return 'der_base64'
-  // .cer could be DER or PEM — check content later, default to auto
   return ''
+}
+
+async function readFileSmartly(file: File): Promise<{ content: string; inputType: string }> {
+  // .cer/.crt can be PEM or DER — peek at content to decide
+  if (isAmbiguousExt(file.name)) {
+    const text = await readFileAsText(file)
+    if (text.trimStart().startsWith('-----BEGIN ')) {
+      return { content: text, inputType: '' }
+    }
+    // Not PEM → treat as binary DER
+    const base64 = await readFileAsBase64(file)
+    return { content: base64, inputType: 'der_base64' }
+  }
+
+  if (isBinaryExt(file.name)) {
+    const base64 = await readFileAsBase64(file)
+    return { content: base64, inputType: detectInputType(file.name) }
+  }
+
+  // Text formats: .pem, .key, .csr
+  const text = await readFileAsText(file)
+  return { content: text, inputType: '' }
 }
 
 function readFileAsText(file: File): Promise<string> {
@@ -73,9 +99,7 @@ function FileUploadButton({ onLoad, accept, label }: { onLoad: (result: FileUplo
   const handleChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    const binary = isBinaryFile(file.name)
-    const content = binary ? await readFileAsBase64(file) : await readFileAsText(file)
-    const inputType = binary ? detectInputType(file.name) : ''
+    const { content, inputType } = await readFileSmartly(file)
     onLoad({ content, filename: file.name, inputType })
     if (inputRef.current) inputRef.current.value = ''
   }, [onLoad])
