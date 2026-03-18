@@ -11,13 +11,13 @@
 #   sudo journalctl -u hycert-ui -f
 
 [Unit]
-Description=HySP Certificate UI (Next.js)
+Description=HySP Certificate UI (Vite + nginx)
 After=network.target
 
 [Container]
 Image=ghcr.io/robert7528/hycert-ui:latest
-# 只對 localhost 開放，由 nginx 反向代理
-PublishPort=127.0.0.1:3002:3000
+# 只對 localhost 開放，由外部 nginx 反向代理
+PublishPort=127.0.0.1:3002:80
 LogDriver=journald
 
 [Service]
