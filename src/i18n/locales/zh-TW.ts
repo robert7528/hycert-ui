@@ -46,6 +46,14 @@ const zhTW = {
         resultChainOrder: '憑證鏈順序',
         resultCount: '共 {count} 張',
       },
+      decryptKey: {
+        title: '私鑰解密',
+        description: '將加密的私鑰解密為明文 PEM（適用於 Apache / Nginx 免密碼啟動）。',
+        buttonRun: '解密私鑰',
+        labelEncryptedKey: '加密私鑰',
+        labelPassword: '密碼',
+        resultKeyType: '金鑰類型',
+      },
       generateCsr: {
         title: '產生 CSR',
         description: '產生憑證簽署請求與私鑰。',

@@ -153,6 +153,17 @@ export interface MergeChainResponse {
   count: number
 }
 
+export interface DecryptKeyRequest {
+  encrypted_key: string
+  password: string
+}
+
+export interface DecryptKeyResponse {
+  private_key_pem: string
+  key_type: string
+  bits: number
+}
+
 export const certUtilityApi = {
   verify: (req: VerifyRequest) =>
     certFetch<VerifyResponse>('/api/v1/adm/cert/utility/verify', {
@@ -174,6 +185,12 @@ export const certUtilityApi = {
 
   generateCSR: (req: GenerateCSRRequest) =>
     certFetch<GenerateCSRResponse>('/api/v1/adm/cert/utility/generate-csr', {
+      method: 'POST',
+      body: JSON.stringify(req),
+    }),
+
+  decryptKey: (req: DecryptKeyRequest) =>
+    certFetch<DecryptKeyResponse>('/api/v1/adm/cert/utility/decrypt-key', {
       method: 'POST',
       body: JSON.stringify(req),
     }),

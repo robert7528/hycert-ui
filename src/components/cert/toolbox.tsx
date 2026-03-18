@@ -8,10 +8,10 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
   Separator,
 } from '@hysp/ui-kit'
-import { Loader2, ShieldCheck, FileSearch, ArrowRightLeft, FileKey, Link2, Upload, Download, X } from 'lucide-react'
-import { certUtilityApi, type VerifyResponse, type ParseResponse, type ConvertResponse, type GenerateCSRResponse, type MergeChainResponse } from '@/lib/cert-api'
+import { Loader2, ShieldCheck, FileSearch, ArrowRightLeft, FileKey, Link2, KeyRound, Upload, Download, X } from 'lucide-react'
+import { certUtilityApi, type VerifyResponse, type ParseResponse, type ConvertResponse, type GenerateCSRResponse, type MergeChainResponse, type DecryptKeyResponse } from '@/lib/cert-api'
 
-type Tool = 'verify' | 'parse' | 'convert' | 'merge-chain' | 'generate-csr'
+type Tool = 'verify' | 'parse' | 'convert' | 'merge-chain' | 'decrypt-key' | 'generate-csr'
 
 const CERT_ACCEPT = '.pem,.cer,.crt,.der,.pfx,.p12,.jks,.p7b,.key,.csr'
 const BINARY_EXTS = ['.pfx', '.p12', '.der', '.jks', '.p7b']
@@ -119,13 +119,14 @@ export function CertToolbox() {
   const { t } = useLocale()
   const [activeTool, setActiveTool] = useState<Tool>('verify')
   const { toolbox } = t.hycert
-  const { verify, parse, convert, mergeChain, generateCsr } = toolbox
+  const { verify, parse, convert, mergeChain, decryptKey, generateCsr } = toolbox
 
   const tools: { key: Tool; icon: React.ReactNode; label: string; desc: string }[] = [
     { key: 'verify', icon: <ShieldCheck className="h-4 w-4" />, label: verify.title, desc: verify.description },
     { key: 'parse', icon: <FileSearch className="h-4 w-4" />, label: parse.title, desc: parse.description },
     { key: 'convert', icon: <ArrowRightLeft className="h-4 w-4" />, label: convert.title, desc: convert.description },
     { key: 'merge-chain', icon: <Link2 className="h-4 w-4" />, label: mergeChain.title, desc: mergeChain.description },
+    { key: 'decrypt-key', icon: <KeyRound className="h-4 w-4" />, label: decryptKey.title, desc: decryptKey.description },
     { key: 'generate-csr', icon: <FileKey className="h-4 w-4" />, label: generateCsr.title, desc: generateCsr.description },
   ]
 
@@ -150,6 +151,7 @@ export function CertToolbox() {
       {activeTool === 'parse' && <ParseTool />}
       {activeTool === 'convert' && <ConvertTool />}
       {activeTool === 'merge-chain' && <MergeChainTool />}
+      {activeTool === 'decrypt-key' && <DecryptKeyTool />}
       {activeTool === 'generate-csr' && <GenerateCSRTool />}
     </div>
   )
@@ -785,6 +787,108 @@ function MergeChainTool() {
                 </div>
               </div>
               <Textarea readOnly rows={10} value={result.pem} className="font-mono text-xs" />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  )
+}
+
+// ── Decrypt Key ──────────────────────────────────────────────────────────
+
+function DecryptKeyTool() {
+  const { t } = useLocale()
+  const { common, decryptKey, result: res } = t.hycert.toolbox
+  const [encryptedKey, setEncryptedKey] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [result, setResult] = useState<DecryptKeyResponse | null>(null)
+
+  const handleFileUpload = (r: FileUploadResult) => {
+    setEncryptedKey(r.content)
+    setResult(null)
+  }
+
+  const handleDecrypt = async () => {
+    if (!encryptedKey.trim() || !password) return
+    setLoading(true)
+    setError('')
+    setResult(null)
+    try {
+      const apiRes = await certUtilityApi.decryptKey({
+        encrypted_key: encryptedKey,
+        password,
+      })
+      setResult(apiRes.data)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Unknown error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">{decryptKey.title}</CardTitle>
+          <CardDescription>{decryptKey.description}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label>{decryptKey.labelEncryptedKey}</Label>
+              <FileUploadButton accept=".key,.pem" label={common.buttonUpload} onLoad={handleFileUpload} />
+            </div>
+            <Textarea
+              rows={10}
+              placeholder="-----BEGIN ENCRYPTED PRIVATE KEY-----"
+              value={encryptedKey}
+              onChange={(e) => { setEncryptedKey(e.target.value); setResult(null) }}
+              className="font-mono text-xs"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>{decryptKey.labelPassword}</Label>
+            <Input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+          <Button onClick={handleDecrypt} disabled={loading || !encryptedKey.trim() || !password} className="w-full">
+            {loading && <Loader2 className="h-4 w-4 animate-spin mr-1.5" />}
+            {decryptKey.buttonRun}
+          </Button>
+          {error && <p className="text-sm text-destructive">{error}</p>}
+        </CardContent>
+      </Card>
+
+      {result && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">{res.title}</CardTitle>
+            <CardDescription>
+              {decryptKey.resultKeyType}: {result.key_type} {result.bits}-bit
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label>{common.labelPrivateKeyFull}</Label>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="sm" onClick={() => navigator.clipboard.writeText(result.private_key_pem)}>
+                    {common.buttonCopy}
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => downloadTextFile(result.private_key_pem, 'decrypted.key')} className="gap-1">
+                    <Download className="h-3.5 w-3.5" />
+                    .key
+                  </Button>
+                </div>
+              </div>
+              <Textarea readOnly rows={10} value={result.private_key_pem} className="font-mono text-xs" />
             </div>
           </CardContent>
         </Card>

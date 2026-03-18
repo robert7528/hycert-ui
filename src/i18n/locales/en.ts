@@ -46,6 +46,14 @@ const en = {
         resultChainOrder: 'Chain Order',
         resultCount: '{count} certificates',
       },
+      decryptKey: {
+        title: 'Decrypt Key',
+        description: 'Decrypt an encrypted private key to plain PEM (for Apache / Nginx password-free startup).',
+        buttonRun: 'Decrypt Key',
+        labelEncryptedKey: 'Encrypted Private Key',
+        labelPassword: 'Password',
+        resultKeyType: 'Key Type',
+      },
       generateCsr: {
         title: 'Generate CSR',
         description: 'Generate a Certificate Signing Request and private key.',
