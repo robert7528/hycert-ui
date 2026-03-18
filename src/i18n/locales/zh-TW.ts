@@ -34,6 +34,18 @@ const zhTW = {
         yes: '是',
         no: '否',
       },
+      mergeChain: {
+        title: '合併 Chain',
+        description: '將多張憑證合併為完整憑證鏈（自動排序：server → 中繼 → 根）。',
+        buttonRun: '合併憑證鏈',
+        buttonAddFile: '新增憑證',
+        labelCerts: '已上傳憑證',
+        emptyHint: '請上傳 2 張以上憑證檔（.pem / .cer / .crt）。',
+        labelOrPaste: '或貼上 PEM',
+        buttonAdd: '加入',
+        resultChainOrder: '憑證鏈順序',
+        resultCount: '共 {count} 張',
+      },
       generateCsr: {
         title: '產生 CSR',
         description: '產生憑證簽署請求與私鑰。',

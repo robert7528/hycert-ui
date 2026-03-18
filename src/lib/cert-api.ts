@@ -143,6 +143,16 @@ export interface GenerateCSRResponse {
   warning: string
 }
 
+export interface MergeChainRequest {
+  certificates: string[]
+}
+
+export interface MergeChainResponse {
+  chain: { index: number; role: string; cn: string; issuer: string }[]
+  pem: string
+  count: number
+}
+
 export const certUtilityApi = {
   verify: (req: VerifyRequest) =>
     certFetch<VerifyResponse>('/api/v1/adm/cert/utility/verify', {
@@ -164,6 +174,12 @@ export const certUtilityApi = {
 
   generateCSR: (req: GenerateCSRRequest) =>
     certFetch<GenerateCSRResponse>('/api/v1/adm/cert/utility/generate-csr', {
+      method: 'POST',
+      body: JSON.stringify(req),
+    }),
+
+  mergeChain: (req: MergeChainRequest) =>
+    certFetch<MergeChainResponse>('/api/v1/adm/cert/utility/merge-chain', {
       method: 'POST',
       body: JSON.stringify(req),
     }),

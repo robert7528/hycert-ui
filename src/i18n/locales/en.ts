@@ -34,6 +34,18 @@ const en = {
         yes: 'Yes',
         no: 'No',
       },
+      mergeChain: {
+        title: 'Merge Chain',
+        description: 'Merge multiple certificates into a full chain (auto-order: server → intermediate → root).',
+        buttonRun: 'Merge Chain',
+        buttonAddFile: 'Add Certificate',
+        labelCerts: 'Uploaded Certificates',
+        emptyHint: 'Upload 2 or more certificate files (.pem / .cer / .crt).',
+        labelOrPaste: 'Or paste PEM',
+        buttonAdd: 'Add',
+        resultChainOrder: 'Chain Order',
+        resultCount: '{count} certificates',
+      },
       generateCsr: {
         title: 'Generate CSR',
         description: 'Generate a Certificate Signing Request and private key.',

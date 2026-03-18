@@ -8,10 +8,10 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
   Separator,
 } from '@hysp/ui-kit'
-import { Loader2, ShieldCheck, FileSearch, ArrowRightLeft, FileKey, Upload, Download } from 'lucide-react'
-import { certUtilityApi, type VerifyResponse, type ParseResponse, type ConvertResponse, type GenerateCSRResponse } from '@/lib/cert-api'
+import { Loader2, ShieldCheck, FileSearch, ArrowRightLeft, FileKey, Link2, Upload, Download, X } from 'lucide-react'
+import { certUtilityApi, type VerifyResponse, type ParseResponse, type ConvertResponse, type GenerateCSRResponse, type MergeChainResponse } from '@/lib/cert-api'
 
-type Tool = 'verify' | 'parse' | 'convert' | 'generate-csr'
+type Tool = 'verify' | 'parse' | 'convert' | 'merge-chain' | 'generate-csr'
 
 const CERT_ACCEPT = '.pem,.cer,.crt,.der,.pfx,.p12,.jks,.p7b,.key,.csr'
 const BINARY_EXTS = ['.pfx', '.p12', '.der', '.jks', '.p7b']
@@ -119,12 +119,13 @@ export function CertToolbox() {
   const { t } = useLocale()
   const [activeTool, setActiveTool] = useState<Tool>('verify')
   const { toolbox } = t.hycert
-  const { verify, parse, convert, generateCsr } = toolbox
+  const { verify, parse, convert, mergeChain, generateCsr } = toolbox
 
   const tools: { key: Tool; icon: React.ReactNode; label: string; desc: string }[] = [
     { key: 'verify', icon: <ShieldCheck className="h-4 w-4" />, label: verify.title, desc: verify.description },
     { key: 'parse', icon: <FileSearch className="h-4 w-4" />, label: parse.title, desc: parse.description },
     { key: 'convert', icon: <ArrowRightLeft className="h-4 w-4" />, label: convert.title, desc: convert.description },
+    { key: 'merge-chain', icon: <Link2 className="h-4 w-4" />, label: mergeChain.title, desc: mergeChain.description },
     { key: 'generate-csr', icon: <FileKey className="h-4 w-4" />, label: generateCsr.title, desc: generateCsr.description },
   ]
 
@@ -148,6 +149,7 @@ export function CertToolbox() {
       {activeTool === 'verify' && <VerifyTool />}
       {activeTool === 'parse' && <ParseTool />}
       {activeTool === 'convert' && <ConvertTool />}
+      {activeTool === 'merge-chain' && <MergeChainTool />}
       {activeTool === 'generate-csr' && <GenerateCSRTool />}
     </div>
   )
@@ -619,6 +621,171 @@ function ConvertTool() {
               <Download className="h-3.5 w-3.5" />
               {common.buttonDownload}
             </Button>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  )
+}
+
+// ── Merge Chain ──────────────────────────────────────────────────────────
+
+function MultiFileUploadButton({ onLoad, accept, label }: { onLoad: (results: FileUploadResult[]) => void; accept?: string; label: string }) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const handleChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+    const results: FileUploadResult[] = []
+    for (const file of Array.from(files)) {
+      const { content, inputType } = await readFileSmartly(file)
+      results.push({ content, filename: file.name, inputType })
+    }
+    onLoad(results)
+    if (inputRef.current) inputRef.current.value = ''
+  }, [onLoad])
+
+  return (
+    <>
+      <input ref={inputRef} type="file" accept={accept ?? '.pem,.cer,.crt'} multiple onChange={handleChange} className="hidden" />
+      <Button type="button" variant="outline" size="sm" onClick={() => inputRef.current?.click()} className="gap-1.5">
+        <Upload className="h-3.5 w-3.5" />
+        {label}
+      </Button>
+    </>
+  )
+}
+
+function MergeChainTool() {
+  const { t } = useLocale()
+  const { common, mergeChain, result: res } = t.hycert.toolbox
+  const [certs, setCerts] = useState<{ filename: string; content: string }[]>([])
+  const [pasteInput, setPasteInput] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [result, setResult] = useState<MergeChainResponse | null>(null)
+
+  const handleFilesUploaded = (results: FileUploadResult[]) => {
+    setCerts((prev) => [
+      ...prev,
+      ...results.map((r) => ({ filename: r.filename, content: r.content })),
+    ])
+    setResult(null)
+  }
+
+  const handleAddPaste = () => {
+    if (!pasteInput.trim()) return
+    setCerts((prev) => [...prev, { filename: `pasted-${prev.length + 1}.pem`, content: pasteInput.trim() }])
+    setPasteInput('')
+    setResult(null)
+  }
+
+  const handleRemove = (index: number) => {
+    setCerts((prev) => prev.filter((_, i) => i !== index))
+    setResult(null)
+  }
+
+  const handleMerge = async () => {
+    if (certs.length < 2) return
+    setLoading(true)
+    setError('')
+    setResult(null)
+    try {
+      const apiRes = await certUtilityApi.mergeChain({
+        certificates: certs.map((c) => c.content),
+      })
+      setResult(apiRes.data)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Unknown error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">{mergeChain.title}</CardTitle>
+          <CardDescription>{mergeChain.description}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label>{mergeChain.labelCerts}</Label>
+            <MultiFileUploadButton label={mergeChain.buttonAddFile} onLoad={handleFilesUploaded} />
+          </div>
+
+          {certs.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">{mergeChain.emptyHint}</p>
+          ) : (
+            <div className="space-y-1">
+              {certs.map((cert, i) => (
+                <div key={i} className="flex items-center justify-between rounded-md border px-3 py-1.5 text-sm">
+                  <span className="font-mono text-xs truncate">{cert.filename}</span>
+                  <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => handleRemove(i)}>
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <Separator />
+          <div className="space-y-1.5">
+            <Label>{mergeChain.labelOrPaste}</Label>
+            <Textarea
+              rows={4}
+              placeholder="-----BEGIN CERTIFICATE-----"
+              value={pasteInput}
+              onChange={(e) => setPasteInput(e.target.value)}
+              className="font-mono text-xs"
+            />
+            <Button variant="outline" size="sm" onClick={handleAddPaste} disabled={!pasteInput.trim()}>
+              {mergeChain.buttonAdd}
+            </Button>
+          </div>
+
+          <Button onClick={handleMerge} disabled={loading || certs.length < 2} className="w-full">
+            {loading && <Loader2 className="h-4 w-4 animate-spin mr-1.5" />}
+            {mergeChain.buttonRun}
+          </Button>
+          {error && <p className="text-sm text-destructive">{error}</p>}
+        </CardContent>
+      </Card>
+
+      {result && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">{res.title}</CardTitle>
+            <CardDescription>
+              {mergeChain.resultCount.replace('{count}', String(result.count))}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <Section title={mergeChain.resultChainOrder}>
+              {result.chain.map((node) => (
+                <div key={node.index} className="flex items-center gap-2 text-xs">
+                  <Badge variant="outline" className="shrink-0">{node.index + 1}</Badge>
+                  <Badge variant="secondary" className="shrink-0">{node.role}</Badge>
+                  <span className="font-mono truncate">{node.cn}</span>
+                </div>
+              ))}
+            </Section>
+            <Separator />
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label>fullchain.pem</Label>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="sm" onClick={() => navigator.clipboard.writeText(result.pem)}>
+                    {common.buttonCopy}
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => downloadTextFile(result.pem, 'fullchain.pem')} className="gap-1">
+                    <Download className="h-3.5 w-3.5" />
+                    {common.buttonDownload}
+                  </Button>
+                </div>
+              </div>
+              <Textarea readOnly rows={10} value={result.pem} className="font-mono text-xs" />
+            </div>
           </CardContent>
         </Card>
       )}
