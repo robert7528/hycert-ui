@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import { LocaleProvider } from '@/contexts/locale-context'
-import { HeightSync } from '@/components/height-sync'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -14,7 +13,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <LocaleProvider>
           {children}
         </LocaleProvider>
-        <HeightSync />
       </body>
     </html>
   )
