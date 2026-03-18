@@ -11,7 +11,8 @@ export function HeightSync() {
     // Only run inside iframe
     if (window === window.parent) return
 
-    const appName = (window as Record<string, unknown>).__MICRO_APP_NAME__ as string | undefined
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const appName = (window as any).__MICRO_APP_NAME__ as string | undefined
 
     let lastHeight = 0
 
