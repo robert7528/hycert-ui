@@ -2,12 +2,12 @@ const zhTW = {
   hycert: {
     toolbox: {
       common: {
-        labelCertificate: '憑證（PEM）',
+        labelCertificate: '憑證',
         labelPrivateKey: '私鑰（選填）',
         labelPrivateKeyFull: '私鑰',
-        labelPfxPassword: 'PFX 密碼',
-        placeholderPfxPassword: 'PFX 檔案密碼',
-        labelInputPfxPassword: '輸入 PFX 密碼',
+        labelPassword: '檔案密碼',
+        placeholderPassword: '輸入檔案密碼',
+        labelInputPassword: '來源檔案密碼',
         labelOutputPassword: '輸出密碼',
         buttonUpload: '上傳檔案',
         buttonCopy: '複製',

@@ -230,12 +230,12 @@ function VerifyTool() {
           </div>
           {needsPassword && (
             <div className="space-y-1.5">
-              <Label>{common.labelPfxPassword}</Label>
+              <Label>{common.labelPassword}</Label>
               <Input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder={common.placeholderPfxPassword}
+                placeholder={common.placeholderPassword}
               />
             </div>
           )}
@@ -403,12 +403,12 @@ function ParseTool() {
           </div>
           {needsPassword && (
             <div className="space-y-1.5">
-              <Label>{common.labelPfxPassword}</Label>
+              <Label>{common.labelPassword}</Label>
               <Input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder={common.placeholderPfxPassword}
+                placeholder={common.placeholderPassword}
               />
             </div>
           )}
@@ -554,12 +554,12 @@ function ConvertTool() {
           </div>
           {isInputNeedsPassword && (
             <div className="space-y-1.5">
-              <Label>{common.labelInputPfxPassword}</Label>
+              <Label>{common.labelInputPassword}</Label>
               <Input
                 type="password"
                 value={inputPassword}
                 onChange={(e) => setInputPassword(e.target.value)}
-                placeholder={common.placeholderPfxPassword}
+                placeholder={common.placeholderPassword}
               />
             </div>
           )}
@@ -601,7 +601,7 @@ function ConvertTool() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder={common.placeholderPfxPassword}
+                placeholder={common.placeholderPassword}
               />
             </div>
           )}

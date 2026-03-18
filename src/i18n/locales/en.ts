@@ -2,12 +2,12 @@ const en = {
   hycert: {
     toolbox: {
       common: {
-        labelCertificate: 'Certificate (PEM)',
+        labelCertificate: 'Certificate',
         labelPrivateKey: 'Private Key (optional)',
         labelPrivateKeyFull: 'Private Key',
-        labelPfxPassword: 'PFX Password',
-        placeholderPfxPassword: 'Password for PFX file',
-        labelInputPfxPassword: 'Input PFX Password',
+        labelPassword: 'File Password',
+        placeholderPassword: 'Enter file password',
+        labelInputPassword: 'Input File Password',
         labelOutputPassword: 'Output Password',
         buttonUpload: 'Upload',
         buttonCopy: 'Copy',
