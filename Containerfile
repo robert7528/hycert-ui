@@ -9,5 +9,5 @@ RUN bun run build
 
 FROM nginx:alpine AS runner
 COPY deployment/nginx-static.conf /etc/nginx/conf.d/default.conf
-COPY --from=builder /app/dist /usr/share/nginx/html
+COPY --from=builder /app/dist /usr/share/nginx/html/hycert-ui
 EXPOSE 80
