@@ -133,6 +133,7 @@ export interface GenerateCSRRequest {
   }
   key_type?: string
   key_bits?: number
+  passphrase?: string
 }
 
 export interface GenerateCSRResponse {
@@ -140,6 +141,7 @@ export interface GenerateCSRResponse {
   private_key_pem: string
   key_type: string
   key_bits: number
+  key_encrypted: boolean
   warning: string
 }
 

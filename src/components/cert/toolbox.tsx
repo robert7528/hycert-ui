@@ -905,15 +905,22 @@ function GenerateCSRTool() {
   const [domain, setDomain] = useState('')
   const [sans, setSans] = useState('')
   const [org, setOrg] = useState('')
+  const [orgUnit, setOrgUnit] = useState('')
   const [country, setCountry] = useState('')
+  const [state, setState] = useState('')
+  const [locality, setLocality] = useState('')
   const [keyType, setKeyType] = useState('rsa')
   const [keyBits, setKeyBits] = useState('2048')
+  const [passphrase, setPassphrase] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [result, setResult] = useState<GenerateCSRResponse | null>(null)
 
+  const countryValid = !country || /^[A-Z]{2}$/.test(country)
+  const canSubmit = domain.trim() && org.trim() && country.trim() && state.trim() && locality.trim() && countryValid
+
   const handleGenerate = async () => {
-    if (!domain.trim()) return
+    if (!canSubmit) return
     setLoading(true)
     setError('')
     setResult(null)
@@ -922,9 +929,16 @@ function GenerateCSRTool() {
       const apiRes = await certUtilityApi.generateCSR({
         domain,
         sans: sansList.length ? sansList : undefined,
-        subject: (org || country) ? { o: org || undefined, c: country || undefined } : undefined,
+        subject: {
+          o: org || undefined,
+          ou: orgUnit || undefined,
+          c: country || undefined,
+          st: state || undefined,
+          l: locality || undefined,
+        },
         key_type: keyType,
         key_bits: parseInt(keyBits),
+        passphrase: passphrase || undefined,
       })
       setResult(apiRes.data)
     } catch (e: unknown) {
@@ -932,10 +946,6 @@ function GenerateCSRTool() {
     } finally {
       setLoading(false)
     }
-  }
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
   }
 
   return (
@@ -951,8 +961,9 @@ function GenerateCSRTool() {
             <Input
               value={domain}
               onChange={(e) => setDomain(e.target.value)}
-              placeholder="example.com"
+              placeholder="example.com / *.example.com"
             />
+            <p className="text-xs text-muted-foreground">{generateCsr.hintWildcard}</p>
           </div>
           <div className="space-y-1.5">
             <Label>{generateCsr.labelSans}</Label>
@@ -964,16 +975,42 @@ function GenerateCSRTool() {
               className="font-mono text-xs"
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+
+          <Separator />
+
+          <div className="space-y-1.5">
+            <Label>{generateCsr.labelOrganization} *</Label>
+            <Input value={org} onChange={(e) => setOrg(e.target.value)} placeholder="My Company Ltd." />
+          </div>
+          <div className="space-y-1.5">
+            <Label>{generateCsr.labelOrgUnit}</Label>
+            <Input value={orgUnit} onChange={(e) => setOrgUnit(e.target.value)} placeholder="IT" />
+          </div>
+          <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1.5">
-              <Label>{generateCsr.labelOrganization}</Label>
-              <Input value={org} onChange={(e) => setOrg(e.target.value)} />
+              <Label>{generateCsr.labelCountry} *</Label>
+              <Input
+                value={country}
+                onChange={(e) => setCountry(e.target.value.toUpperCase())}
+                placeholder="TW"
+                maxLength={2}
+              />
+              {country && !countryValid && (
+                <p className="text-xs text-destructive">{generateCsr.errorCountryCode}</p>
+              )}
             </div>
             <div className="space-y-1.5">
-              <Label>{generateCsr.labelCountry}</Label>
-              <Input value={country} onChange={(e) => setCountry(e.target.value)} placeholder="TW" maxLength={2} />
+              <Label>{generateCsr.labelState} *</Label>
+              <Input value={state} onChange={(e) => setState(e.target.value)} placeholder="Taipei City" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>{generateCsr.labelLocality} *</Label>
+              <Input value={locality} onChange={(e) => setLocality(e.target.value)} placeholder="Zhongzheng Dist." />
             </div>
           </div>
+
+          <Separator />
+
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>{generateCsr.labelKeyType}</Label>
@@ -1009,7 +1046,16 @@ function GenerateCSRTool() {
               </Select>
             </div>
           </div>
-          <Button onClick={handleGenerate} disabled={loading || !domain.trim()} className="w-full">
+          <div className="space-y-1.5">
+            <Label>{generateCsr.labelPassphrase}</Label>
+            <Input
+              type="password"
+              value={passphrase}
+              onChange={(e) => setPassphrase(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">{generateCsr.hintPassphrase}</p>
+          </div>
+          <Button onClick={handleGenerate} disabled={loading || !canSubmit} className="w-full">
             {loading && <Loader2 className="h-4 w-4 animate-spin mr-1.5" />}
             {generateCsr.buttonRun}
           </Button>
@@ -1023,7 +1069,10 @@ function GenerateCSRTool() {
             <CardTitle className="text-base">{res.title}</CardTitle>
             <CardDescription>
               {result.key_type.toUpperCase()} {result.key_bits}-bit
-              {result.warning && <span className="text-yellow-600 dark:text-yellow-400 ml-2">{result.warning}</span>}
+              {' · '}
+              <Badge variant={result.key_encrypted ? 'secondary' : 'outline'} className="ml-1">
+                {result.key_encrypted ? generateCsr.keyEncrypted : generateCsr.keyPlain}
+              </Badge>
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -1031,7 +1080,7 @@ function GenerateCSRTool() {
               <div className="flex items-center justify-between">
                 <Label>CSR (PEM)</Label>
                 <div className="flex gap-1">
-                  <Button variant="ghost" size="sm" onClick={() => copyToClipboard(result.csr_pem)}>
+                  <Button variant="ghost" size="sm" onClick={() => navigator.clipboard.writeText(result.csr_pem)}>
                     {common.buttonCopy}
                   </Button>
                   <Button variant="ghost" size="sm" onClick={() => downloadTextFile(result.csr_pem, `${domain || 'certificate'}.csr`)} className="gap-1">
@@ -1046,7 +1095,7 @@ function GenerateCSRTool() {
               <div className="flex items-center justify-between">
                 <Label>{common.labelPrivateKeyFull}</Label>
                 <div className="flex gap-1">
-                  <Button variant="ghost" size="sm" onClick={() => copyToClipboard(result.private_key_pem)}>
+                  <Button variant="ghost" size="sm" onClick={() => navigator.clipboard.writeText(result.private_key_pem)}>
                     {common.buttonCopy}
                   </Button>
                   <Button variant="ghost" size="sm" onClick={() => downloadTextFile(result.private_key_pem, `${domain || 'certificate'}.key`)} className="gap-1">
