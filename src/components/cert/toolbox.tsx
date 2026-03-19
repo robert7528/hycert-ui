@@ -872,21 +872,20 @@ function DecryptKeyTool() {
         </CardContent>
       </Card>
 
-      <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
-        <DialogContent
-          onPointerDownOutside={(e) => e.preventDefault()}
-          onEscapeKeyDown={(e) => { e.preventDefault(); setShowConfirm(false) }}
-        >
-          <DialogHeader>
-            <DialogTitle>{decryptKey.confirmTitle}</DialogTitle>
-            <DialogDescription>{decryptKey.confirmMessage}</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setShowConfirm(false)}>{decryptKey.confirmCancel}</Button>
-            <Button onClick={(e) => { e.stopPropagation(); handleDecrypt() }}>{decryptKey.confirmYes}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {showConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowConfirm(false)}>
+          <div className="bg-background rounded-lg border shadow-lg p-6 w-full max-w-md mx-4 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="space-y-1.5">
+              <h3 className="text-lg font-semibold">{decryptKey.confirmTitle}</h3>
+              <p className="text-sm text-muted-foreground">{decryptKey.confirmMessage}</p>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => setShowConfirm(false)}>{decryptKey.confirmCancel}</Button>
+              <Button onClick={handleDecrypt}>{decryptKey.confirmYes}</Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {result && (
         <Card>
