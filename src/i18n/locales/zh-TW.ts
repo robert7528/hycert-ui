@@ -54,6 +54,10 @@ const zhTW = {
         labelEncryptedKey: '加密私鑰',
         labelPassword: '密碼',
         resultKeyType: '金鑰類型',
+        confirmTitle: '確認解密',
+        confirmMessage: '解密後的私鑰為明文，請確保在安全的環境下操作。確定要繼續嗎？',
+        confirmYes: '確認解密',
+        confirmCancel: '取消',
       },
       generateCsr: {
         title: '產生 CSR',

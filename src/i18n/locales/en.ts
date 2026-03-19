@@ -54,6 +54,10 @@ const en = {
         labelEncryptedKey: 'Encrypted Private Key',
         labelPassword: 'Password',
         resultKeyType: 'Key Type',
+        confirmTitle: 'Confirm Decrypt',
+        confirmMessage: 'The decrypted key will be in plain text. Make sure you are in a secure environment. Continue?',
+        confirmYes: 'Confirm Decrypt',
+        confirmCancel: 'Cancel',
       },
       generateCsr: {
         title: 'Generate CSR',

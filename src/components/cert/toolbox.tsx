@@ -7,6 +7,7 @@ import {
   Button, Textarea, Input, Label, Badge,
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
   Separator,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@hysp/ui-kit'
 import { Loader2, ShieldCheck, FileSearch, ArrowRightLeft, FileKey, Link2, KeyRound, Upload, Download, X } from 'lucide-react'
 import { certUtilityApi, type VerifyResponse, type ParseResponse, type ConvertResponse, type GenerateCSRResponse, type MergeChainResponse, type DecryptKeyResponse } from '@/lib/cert-api'
@@ -809,6 +810,7 @@ function DecryptKeyTool() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [result, setResult] = useState<DecryptKeyResponse | null>(null)
+  const [showConfirm, setShowConfirm] = useState(false)
 
   const handleFileUpload = (r: FileUploadResult) => {
     setEncryptedKey(r.content)
@@ -816,7 +818,7 @@ function DecryptKeyTool() {
   }
 
   const handleDecrypt = async () => {
-    if (!encryptedKey.trim() || !password) return
+    setShowConfirm(false)
     setLoading(true)
     setError('')
     setResult(null)
@@ -862,13 +864,27 @@ function DecryptKeyTool() {
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
-          <Button onClick={handleDecrypt} disabled={loading || !encryptedKey.trim() || !password} className="w-full">
+          <Button onClick={() => setShowConfirm(true)} disabled={loading || !encryptedKey.trim() || !password} className="w-full">
             {loading && <Loader2 className="h-4 w-4 animate-spin mr-1.5" />}
             {decryptKey.buttonRun}
           </Button>
           {error && <p className="text-sm text-destructive">{error}</p>}
         </CardContent>
       </Card>
+
+      {/* Confirm dialog — tests Radix Dialog in wujie sub-app */}
+      <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{decryptKey.confirmTitle}</DialogTitle>
+            <DialogDescription>{decryptKey.confirmMessage}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setShowConfirm(false)}>{decryptKey.confirmCancel}</Button>
+            <Button onClick={handleDecrypt}>{decryptKey.confirmYes}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {result && (
         <Card>
