@@ -9,7 +9,7 @@ import {
   Separator,
   toast,
 } from '@hysp/ui-kit'
-import { Loader2, ShieldCheck, FileSearch, ArrowRightLeft, FileKey, Link2, KeyRound, Upload, Download, X } from 'lucide-react'
+import { Loader2, ShieldCheck, FileSearch, ArrowRightLeft, FileKey, Link2, KeyRound, Upload, Download, X, Info, HelpCircle } from 'lucide-react'
 import { certUtilityApi, type VerifyResponse, type ParseResponse, type ConvertResponse, type GenerateCSRResponse, type MergeChainResponse, type DecryptKeyResponse } from '@/lib/cert-api'
 
 type Tool = 'verify' | 'parse' | 'convert' | 'merge-chain' | 'decrypt-key' | 'generate-csr'
@@ -208,7 +208,24 @@ function VerifyTool() {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">{verify.title}</CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-base">{verify.title}</CardTitle>
+            <CssTooltip text="PEM, DER, PFX, JKS, P7B">
+              <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+            </CssTooltip>
+            <InlinePopover
+              trigger={<HelpCircle className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground transition-colors" />}
+            >
+              <p className="font-medium text-sm">Supported formats</p>
+              <ul className="text-xs text-muted-foreground space-y-1 mt-1">
+                <li>PEM (.pem, .crt, .cer)</li>
+                <li>DER (.der, .cer)</li>
+                <li>PFX/PKCS#12 (.pfx, .p12)</li>
+                <li>JKS (.jks)</li>
+                <li>P7B/PKCS#7 (.p7b)</li>
+              </ul>
+            </InlinePopover>
+          </div>
           <CardDescription>{verify.description}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -1146,6 +1163,32 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
       <span className="text-muted-foreground shrink-0 min-w-[80px]">{label}</span>
       <span className="break-all">{value}</span>
     </div>
+  )
+}
+
+function CssTooltip({ text, children }: { text: string; children: React.ReactNode }) {
+  return (
+    <span className="relative inline-flex group">
+      {children}
+      <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 px-2 py-1 rounded border bg-popover text-popover-foreground text-xs shadow-md whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
+        {text}
+      </span>
+    </span>
+  )
+}
+
+function InlinePopover({ trigger, children }: { trigger: React.ReactNode; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <span className="relative inline-flex">
+      <span onClick={() => setOpen(!open)}>{trigger}</span>
+      {open && (
+        <div className="absolute left-0 top-full mt-1 rounded-md border bg-popover text-popover-foreground shadow-md p-3 z-50 w-56">
+          {children}
+        </div>
+      )}
+    </span>
   )
 }
 
