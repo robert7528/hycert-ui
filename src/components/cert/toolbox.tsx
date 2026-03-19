@@ -8,10 +8,10 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
   Separator,
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+  toast,
 } from '@hysp/ui-kit'
 import { Loader2, ShieldCheck, FileSearch, ArrowRightLeft, FileKey, Link2, KeyRound, Upload, Download, X } from 'lucide-react'
 import { certUtilityApi, type VerifyResponse, type ParseResponse, type ConvertResponse, type GenerateCSRResponse, type MergeChainResponse, type DecryptKeyResponse } from '@/lib/cert-api'
-import { toast } from '@hysp/ui-kit'
 
 type Tool = 'verify' | 'parse' | 'convert' | 'merge-chain' | 'decrypt-key' | 'generate-csr'
 
@@ -872,7 +872,6 @@ function DecryptKeyTool() {
         </CardContent>
       </Card>
 
-      {/* Confirm dialog — tests Radix Dialog in wujie sub-app */}
       <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
         <DialogContent>
           <DialogHeader>
