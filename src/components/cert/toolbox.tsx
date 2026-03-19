@@ -873,14 +873,17 @@ function DecryptKeyTool() {
       </Card>
 
       <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
-        <DialogContent>
+        <DialogContent
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => { e.preventDefault(); setShowConfirm(false) }}
+        >
           <DialogHeader>
             <DialogTitle>{decryptKey.confirmTitle}</DialogTitle>
             <DialogDescription>{decryptKey.confirmMessage}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setShowConfirm(false)}>{decryptKey.confirmCancel}</Button>
-            <Button onClick={handleDecrypt}>{decryptKey.confirmYes}</Button>
+            <Button onClick={(e) => { e.stopPropagation(); handleDecrypt() }}>{decryptKey.confirmYes}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
