@@ -10,6 +10,7 @@ import {
 } from '@hysp/ui-kit'
 import { Loader2, ShieldCheck, FileSearch, ArrowRightLeft, FileKey, Link2, KeyRound, Upload, Download, X } from 'lucide-react'
 import { certUtilityApi, type VerifyResponse, type ParseResponse, type ConvertResponse, type GenerateCSRResponse, type MergeChainResponse, type DecryptKeyResponse } from '@/lib/cert-api'
+import { toast } from '@hysp/ui-kit'
 
 type Tool = 'verify' | 'parse' | 'convert' | 'merge-chain' | 'decrypt-key' | 'generate-csr'
 
@@ -780,7 +781,7 @@ function MergeChainTool() {
               <div className="flex items-center justify-between">
                 <Label>fullchain.pem</Label>
                 <div className="flex gap-1">
-                  <Button variant="ghost" size="sm" onClick={() => navigator.clipboard.writeText(result.pem)}>
+                  <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(result.pem); toast.success(t.hycert.toolbox.common.toastCopied) }}>
                     {common.buttonCopy}
                   </Button>
                   <Button variant="ghost" size="sm" onClick={() => downloadTextFile(result.pem, 'fullchain.pem')} className="gap-1">
@@ -882,7 +883,7 @@ function DecryptKeyTool() {
               <div className="flex items-center justify-between">
                 <Label>{common.labelPrivateKeyFull}</Label>
                 <div className="flex gap-1">
-                  <Button variant="ghost" size="sm" onClick={() => navigator.clipboard.writeText(result.private_key_pem)}>
+                  <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(result.private_key_pem); toast.success(t.hycert.toolbox.common.toastCopied) }}>
                     {common.buttonCopy}
                   </Button>
                   <Button variant="ghost" size="sm" onClick={() => downloadTextFile(result.private_key_pem, 'decrypted.key')} className="gap-1">
@@ -1083,7 +1084,7 @@ function GenerateCSRTool() {
               <div className="flex items-center justify-between">
                 <Label>CSR (PEM)</Label>
                 <div className="flex gap-1">
-                  <Button variant="ghost" size="sm" onClick={() => navigator.clipboard.writeText(result.csr_pem)}>
+                  <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(result.csr_pem); toast.success(t.hycert.toolbox.common.toastCopied) }}>
                     {common.buttonCopy}
                   </Button>
                   <Button variant="ghost" size="sm" onClick={() => downloadTextFile(result.csr_pem, `${domain || 'certificate'}.csr`)} className="gap-1">
@@ -1098,7 +1099,7 @@ function GenerateCSRTool() {
               <div className="flex items-center justify-between">
                 <Label>{common.labelPrivateKeyFull}</Label>
                 <div className="flex gap-1">
-                  <Button variant="ghost" size="sm" onClick={() => navigator.clipboard.writeText(result.private_key_pem)}>
+                  <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(result.private_key_pem); toast.success(t.hycert.toolbox.common.toastCopied) }}>
                     {common.buttonCopy}
                   </Button>
                   <Button variant="ghost" size="sm" onClick={() => downloadTextFile(result.private_key_pem, `${domain || 'certificate'}.key`)} className="gap-1">

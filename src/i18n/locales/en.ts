@@ -11,6 +11,7 @@ const en = {
         labelOutputPassword: 'Output Password',
         buttonUpload: 'Upload',
         buttonCopy: 'Copy',
+        toastCopied: 'Copied to clipboard',
         buttonDownload: 'Download File',
       },
       verify: {

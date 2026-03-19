@@ -11,6 +11,7 @@ const zhTW = {
         labelOutputPassword: '輸出密碼',
         buttonUpload: '上傳檔案',
         buttonCopy: '複製',
+        toastCopied: '已複製到剪貼簿',
         buttonDownload: '下載檔案',
       },
       verify: {
