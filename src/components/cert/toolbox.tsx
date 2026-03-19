@@ -217,7 +217,7 @@ function VerifyTool() {
                 <TooltipTrigger asChild>
                   <Info className="h-4 w-4 text-muted-foreground cursor-help" />
                 </TooltipTrigger>
-                <TooltipContent>
+                <TooltipContent portal={false}>
                   <p>Supports PEM, DER, PFX, JKS formats</p>
                 </TooltipContent>
               </Tooltip>
@@ -228,7 +228,7 @@ function VerifyTool() {
                   <HelpCircle className="h-4 w-4" />
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="text-sm space-y-2">
+              <PopoverContent portal={false} className="text-sm space-y-2">
                 <p className="font-medium">Supported formats</p>
                 <ul className="text-xs text-muted-foreground space-y-1">
                   <li>PEM (.pem, .crt, .cer)</li>
