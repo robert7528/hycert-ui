@@ -1,13 +1,12 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useLocale } from '@/contexts/locale-context'
 import {
   Card, CardContent, CardHeader, CardTitle, CardDescription,
   Button, Textarea, Input, Label, Badge,
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
   Separator,
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
   toast,
 } from '@hysp/ui-kit'
 import { Loader2, ShieldCheck, FileSearch, ArrowRightLeft, FileKey, Link2, KeyRound, Upload, Download, X } from 'lucide-react'
@@ -873,18 +872,14 @@ function DecryptKeyTool() {
       </Card>
 
       {showConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowConfirm(false)}>
-          <div className="bg-background rounded-lg border shadow-lg p-6 w-full max-w-md mx-4 space-y-4" onClick={(e) => e.stopPropagation()}>
-            <div className="space-y-1.5">
-              <h3 className="text-lg font-semibold">{decryptKey.confirmTitle}</h3>
-              <p className="text-sm text-muted-foreground">{decryptKey.confirmMessage}</p>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="ghost" onClick={() => setShowConfirm(false)}>{decryptKey.confirmCancel}</Button>
-              <Button onClick={handleDecrypt}>{decryptKey.confirmYes}</Button>
-            </div>
-          </div>
-        </div>
+        <ConfirmModal
+          title={decryptKey.confirmTitle}
+          message={decryptKey.confirmMessage}
+          confirmLabel={decryptKey.confirmYes}
+          cancelLabel={decryptKey.confirmCancel}
+          onConfirm={handleDecrypt}
+          onCancel={() => setShowConfirm(false)}
+        />
       )}
 
       {result && (
@@ -1150,6 +1145,44 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
     <div className="flex items-center gap-2">
       <span className="text-muted-foreground shrink-0 min-w-[80px]">{label}</span>
       <span className="break-all">{value}</span>
+    </div>
+  )
+}
+
+function ConfirmModal({ title, message, confirmLabel, cancelLabel, onConfirm, onCancel }: {
+  title: string
+  message: string
+  confirmLabel: string
+  cancelLabel: string
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCancel()
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [onCancel])
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onCancel}>
+      <div className="bg-background rounded-lg border shadow-lg p-6 w-full max-w-md mx-4 relative" onClick={(e) => e.stopPropagation()}>
+        <button
+          onClick={onCancel}
+          className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100 transition-opacity"
+        >
+          <X className="h-4 w-4" />
+        </button>
+        <div className="space-y-1.5 pr-8">
+          <h3 className="text-lg font-semibold">{title}</h3>
+          <p className="text-sm text-muted-foreground">{message}</p>
+        </div>
+        <div className="flex justify-end gap-2 mt-4">
+          <Button variant="ghost" onClick={onCancel}>{cancelLabel}</Button>
+          <Button onClick={onConfirm}>{confirmLabel}</Button>
+        </div>
+      </div>
     </div>
   )
 }
