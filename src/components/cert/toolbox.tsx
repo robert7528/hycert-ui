@@ -7,9 +7,11 @@ import {
   Button, Textarea, Input, Label, Badge,
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
   Separator,
+  Tooltip, TooltipTrigger, TooltipContent, TooltipProvider,
+  Popover, PopoverTrigger, PopoverContent,
   toast,
 } from '@hysp/ui-kit'
-import { Loader2, ShieldCheck, FileSearch, ArrowRightLeft, FileKey, Link2, KeyRound, Upload, Download, X } from 'lucide-react'
+import { Loader2, ShieldCheck, FileSearch, ArrowRightLeft, FileKey, Link2, KeyRound, Upload, Download, X, Info, HelpCircle } from 'lucide-react'
 import { certUtilityApi, type VerifyResponse, type ParseResponse, type ConvertResponse, type GenerateCSRResponse, type MergeChainResponse, type DecryptKeyResponse } from '@/lib/cert-api'
 
 type Tool = 'verify' | 'parse' | 'convert' | 'merge-chain' | 'decrypt-key' | 'generate-csr'
@@ -208,7 +210,35 @@ function VerifyTool() {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">{verify.title}</CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-base">{verify.title}</CardTitle>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Supports PEM, DER, PFX, JKS formats</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="text-muted-foreground hover:text-foreground transition-colors">
+                  <HelpCircle className="h-4 w-4" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="text-sm space-y-2">
+                <p className="font-medium">Supported formats</p>
+                <ul className="text-xs text-muted-foreground space-y-1">
+                  <li>PEM (.pem, .crt, .cer)</li>
+                  <li>DER (.der, .cer)</li>
+                  <li>PFX/PKCS#12 (.pfx, .p12)</li>
+                  <li>JKS (.jks)</li>
+                </ul>
+              </PopoverContent>
+            </Popover>
+          </div>
           <CardDescription>{verify.description}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
