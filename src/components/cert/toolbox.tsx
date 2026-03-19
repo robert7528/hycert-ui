@@ -9,7 +9,7 @@ import {
   Separator,
   toast,
 } from '@hysp/ui-kit'
-import { Loader2, ShieldCheck, FileSearch, ArrowRightLeft, FileKey, Link2, KeyRound, Upload, Download, X, Info } from 'lucide-react'
+import { Loader2, ShieldCheck, FileSearch, ArrowRightLeft, FileKey, Link2, KeyRound, Upload, Download, X } from 'lucide-react'
 import { certUtilityApi, type VerifyResponse, type ParseResponse, type ConvertResponse, type GenerateCSRResponse, type MergeChainResponse, type DecryptKeyResponse } from '@/lib/cert-api'
 
 type Tool = 'verify' | 'parse' | 'convert' | 'merge-chain' | 'decrypt-key' | 'generate-csr'
@@ -208,10 +208,7 @@ function VerifyTool() {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex items-center gap-2">
-            <CardTitle className="text-base">{verify.title}</CardTitle>
-            <Info className="h-4 w-4 text-muted-foreground" title="PEM, DER, PFX, JKS, P7B" />
-          </div>
+          <CardTitle className="text-base">{verify.title}</CardTitle>
           <CardDescription>{verify.description}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
