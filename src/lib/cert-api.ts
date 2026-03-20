@@ -293,6 +293,12 @@ export const certCrudApi = {
       method: 'DELETE',
     }),
 
+  uploadKey: (id: number, privateKey: string, password?: string) =>
+    crudFetch<CertificateDTO>(`/api/v1/adm/cert/certificates/${id}/key`, {
+      method: 'PUT',
+      body: JSON.stringify({ private_key: privateKey, password: password || undefined }),
+    }),
+
   download: (id: number, format = 'pem', password?: string) => {
     const qs = new URLSearchParams({ format })
     if (password) qs.set('password', password)

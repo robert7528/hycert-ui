@@ -85,7 +85,10 @@ export function CertImportDialog({ open, onClose, onSuccess }: Props) {
   const [loading, setLoading] = useState(false)
   const [pasteMode, setPasteMode] = useState(false)
   const [pasteContent, setPasteContent] = useState('')
+  const [keyPasteMode, setKeyPasteMode] = useState(false)
   const [dragging, setDragging] = useState(false)
+  const [keyDragging, setKeyDragging] = useState(false)
+  const [keyFileName, setKeyFileName] = useState('')
   const certFileRef = useRef<HTMLInputElement>(null)
   const keyFileRef = useRef<HTMLInputElement>(null)
 
@@ -100,6 +103,9 @@ export function CertImportDialog({ open, onClose, onSuccess }: Props) {
     setNotes('')
     setPasteMode(false)
     setPasteContent('')
+    setKeyFileName('')
+    setKeyDragging(false)
+    setKeyPasteMode(false)
   }
 
   const addFiles = async (fileList: FileList) => {
@@ -140,14 +146,31 @@ export function CertImportDialog({ open, onClose, onSuccess }: Props) {
     setCertFiles(prev => prev.filter((_, i) => i !== index))
   }
 
+  const loadKeyFile = async (file: File) => {
+    const text = await file.text()
+    setKeyContent(text)
+    setKeyFileName(file.name)
+  }
+
   const handleKeyFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    const text = await file.text()
-    setKeyContent(text)
+    await loadKeyFile(file)
+  }
+
+  const handleKeyDrop = async (e: React.DragEvent) => {
+    e.preventDefault()
+    setKeyDragging(false)
+    const file = e.dataTransfer.files[0]
+    if (file) await loadKeyFile(file)
   }
 
   const hasCertContent = certFiles.length > 0 || pasteContent.trim().length > 0
+
+  // Auto-detect if password is needed (PFX/JKS binary formats)
+  const needsPassword = certFiles.some(f =>
+    ['pfx_base64', 'jks_base64'].includes(f.inputType)
+  )
 
   const handleSubmit = async () => {
     if (!hasCertContent) return
@@ -288,34 +311,70 @@ export function CertImportDialog({ open, onClose, onSuccess }: Props) {
             )}
           </div>
 
-          {/* Private key */}
+          {/* Private key — drop zone or text input */}
           <div className="space-y-2">
             <Label>{cl.importKey}</Label>
-            <div className="flex gap-2">
-              <Textarea
-                placeholder="-----BEGIN PRIVATE KEY-----"
-                rows={3}
-                value={keyContent}
-                onChange={e => setKeyContent(e.target.value)}
-                className="flex-1"
-              />
-              <Button variant="outline" size="sm" className="self-start" onClick={() => keyFileRef.current?.click()}>
-                <Upload className="h-4 w-4" />
+            {keyFileName ? (
+              /* File uploaded — show file badge */
+              <div className="flex items-center gap-2 text-sm bg-muted/50 rounded px-2 py-1">
+                <Badge variant="outline" className="text-xs">KEY</Badge>
+                <span className="flex-1 truncate">{keyFileName}</span>
+                <button onClick={() => { setKeyContent(''); setKeyFileName('') }} className="text-muted-foreground hover:text-foreground">
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ) : keyPasteMode || keyContent ? (
+              /* Paste mode or has pasted text — show textarea */
+              <div className="relative">
+                <Textarea
+                  placeholder="-----BEGIN PRIVATE KEY-----"
+                  rows={3}
+                  value={keyContent}
+                  onChange={e => setKeyContent(e.target.value)}
+                  autoFocus={keyPasteMode && !keyContent}
+                />
+                <button
+                  onClick={() => { setKeyContent(''); setKeyPasteMode(false) }}
+                  className="absolute top-1 right-1 p-1 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ) : (
+              /* Empty — show drop zone */
+              <div
+                className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
+                  keyDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-muted-foreground/50'
+                }`}
+                onClick={() => keyFileRef.current?.click()}
+                onDrop={handleKeyDrop}
+                onDragOver={e => { e.preventDefault(); setKeyDragging(true) }}
+                onDragLeave={e => { e.preventDefault(); setKeyDragging(false) }}
+              >
+                <p className="text-sm text-muted-foreground">{cl.importKeyDropHint}</p>
+              </div>
+            )}
+            <input ref={keyFileRef} type="file" className="hidden" accept=".pem,.key" onChange={handleKeyFile} />
+            {!keyContent && !keyFileName && !keyPasteMode && (
+              <Button variant="ghost" size="sm" onClick={() => setKeyPasteMode(true)}>
+                {cl.importKeyPaste}
               </Button>
-              <input ref={keyFileRef} type="file" className="hidden" accept=".pem,.key" onChange={handleKeyFile} />
-            </div>
+            )}
           </div>
 
-          {/* Password (for PFX/JKS) */}
-          <div className="space-y-2">
-            <Label>{cl.importPassword}</Label>
-            <Input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder={t.hycert.toolbox.common.placeholderPassword}
-            />
-          </div>
+          {/* Password (only for PFX/JKS) */}
+          {needsPassword && (
+            <div className="space-y-2">
+              <Label>{cl.importPassword}</Label>
+              <Input
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder={t.hycert.toolbox.common.placeholderPassword}
+              />
+              <p className="text-xs text-muted-foreground">{cl.importPasswordHint}</p>
+            </div>
+          )}
 
           {/* Name */}
           <div className="space-y-2">
