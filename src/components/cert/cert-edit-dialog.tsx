@@ -172,7 +172,7 @@ export function CertEditDialog({ cert, onClose, onSuccess }: Props) {
                     {cl.importKeyPaste}
                   </Button>
                 )}
-                {(keyContent || keyFileName) && (
+                {(keyContent.includes('ENCRYPTED') || keyContent.includes('Proc-Type')) && (
                   <div className="space-y-2">
                     <Label>{cl.editKeyPassword}</Label>
                     <Input
@@ -181,6 +181,7 @@ export function CertEditDialog({ cert, onClose, onSuccess }: Props) {
                       onChange={e => setKeyPassword(e.target.value)}
                       placeholder={cl.editKeyPasswordHint}
                     />
+                    <p className="text-xs text-muted-foreground">{cl.importKeyPasswordHint}</p>
                   </div>
                 )}
               </div>
