@@ -47,24 +47,42 @@ async function readCertFile(file: File): Promise<CertFile> {
   return { name: file.name, content: base64, inputType: 'der_base64', isBinary: true }
 }
 
+/** Convert a base64-encoded DER to PEM format */
+function derBase64ToPem(base64: string): string {
+  // Insert line breaks every 64 chars for proper PEM
+  const lines: string[] = []
+  for (let i = 0; i < base64.length; i += 64) {
+    lines.push(base64.slice(i, i + 64))
+  }
+  return `-----BEGIN CERTIFICATE-----\n${lines.join('\n')}\n-----END CERTIFICATE-----`
+}
+
+/** Convert a CertFile to PEM text (DER files are wrapped with PEM headers) */
+function toPem(f: CertFile): string {
+  if (!f.isBinary) return f.content.trim()
+  if (f.inputType === 'der_base64') return derBase64ToPem(f.content)
+  // PFX/JKS can't be trivially converted to PEM on the frontend
+  return f.content
+}
+
 /** Merge multiple PEM/DER files into a single PEM string for the API */
 function mergeForImport(files: CertFile[]): { certificate: string; inputType: string } {
-  // Single file: send as-is
+  // Single file: send as-is (preserve original format)
   if (files.length === 1) {
     return { certificate: files[0].content, inputType: files[0].inputType }
   }
 
-  // Multiple files: merge all PEM text files into one PEM bundle
-  // Binary files (single) can be sent directly, but multiple must all be PEM-convertible
-  const allPem = files.every(f => !f.isBinary)
-  if (allPem) {
-    const merged = files.map(f => f.content.trim()).join('\n')
+  // Multiple files: convert all to PEM and merge
+  // DER files are wrapped with PEM headers; PEM files used as-is
+  const canAllBePem = files.every(f => !f.isBinary || f.inputType === 'der_base64')
+  if (canAllBePem) {
+    const merged = files.map(f => toPem(f)).join('\n')
     return { certificate: merged, inputType: 'pem' }
   }
 
-  // If there's one binary file among multiple, only send the binary (others would need conversion)
-  // This case is unusual — user should use single PFX or all PEM files
-  const binary = files.find(f => f.isBinary)
+  // Mixed with PFX/JKS — can only send one binary file
+  // (unusual case: user should use single PFX or all PEM/DER files)
+  const binary = files.find(f => f.isBinary && f.inputType !== 'der_base64')
   if (binary) {
     return { certificate: binary.content, inputType: binary.inputType }
   }
