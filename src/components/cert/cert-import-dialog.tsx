@@ -85,6 +85,7 @@ export function CertImportDialog({ open, onClose, onSuccess }: Props) {
   const [loading, setLoading] = useState(false)
   const [pasteMode, setPasteMode] = useState(false)
   const [pasteContent, setPasteContent] = useState('')
+  const [dragging, setDragging] = useState(false)
   const certFileRef = useRef<HTMLInputElement>(null)
   const keyFileRef = useRef<HTMLInputElement>(null)
 
@@ -101,19 +102,38 @@ export function CertImportDialog({ open, onClose, onSuccess }: Props) {
     setPasteContent('')
   }
 
-  const handleCertFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (!files || files.length === 0) return
-
+  const addFiles = async (fileList: FileList) => {
     const newFiles: CertFile[] = []
-    for (let i = 0; i < files.length; i++) {
-      newFiles.push(await readCertFile(files[i]))
+    for (let i = 0; i < fileList.length; i++) {
+      newFiles.push(await readCertFile(fileList[i]))
     }
     setCertFiles(prev => [...prev, ...newFiles])
     setPasteMode(false)
+  }
 
-    // Reset file input so same file can be re-selected
+  const handleCertFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+    await addFiles(files)
     if (certFileRef.current) certFileRef.current.value = ''
+  }
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragging(false)
+    if (e.dataTransfer.files.length > 0) {
+      await addFiles(e.dataTransfer.files)
+    }
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragging(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragging(false)
   }
 
   const removeCertFile = (index: number) => {
@@ -185,36 +205,37 @@ export function CertImportDialog({ open, onClose, onSuccess }: Props) {
             <p className="text-sm text-muted-foreground">{cl.importDesc}</p>
           </div>
 
-          {/* Certificate files */}
+          {/* Certificate files — drop zone */}
           <div className="space-y-2">
             <Label>{cl.importCert}</Label>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => certFileRef.current?.click()}>
-                <Upload className="h-4 w-4 mr-1" />
-                {t.hycert.toolbox.common.buttonUpload}
-              </Button>
-              {certFiles.length === 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setPasteMode(!pasteMode)}
-                >
-                  {cl.importPaste}
-                </Button>
-              )}
-              <input
-                ref={certFileRef}
-                type="file"
-                className="hidden"
-                accept=".pem,.crt,.cer,.der,.pfx,.p12,.jks,.p7b"
-                multiple
-                onChange={handleCertFiles}
-              />
-            </div>
+
+            {/* Drop zone (shown when no files yet and not in paste mode) */}
+            {certFiles.length === 0 && !pasteMode && (
+              <div
+                className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+                  dragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-muted-foreground/50'
+                }`}
+                onClick={() => certFileRef.current?.click()}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+              >
+                <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">{cl.importDropHint}</p>
+                <p className="text-xs text-muted-foreground mt-1">PEM / CER / CRT / DER / PFX / JKS / P7B</p>
+              </div>
+            )}
 
             {/* File list */}
             {certFiles.length > 0 && (
-              <div className="space-y-1">
+              <div
+                className={`space-y-1 rounded-lg p-2 transition-colors ${
+                  dragging ? 'border-2 border-dashed border-primary bg-primary/5' : ''
+                }`}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+              >
                 {certFiles.map((f, i) => (
                   <div key={i} className="flex items-center gap-2 text-sm bg-muted/50 rounded px-2 py-1">
                     <Badge variant="outline" className="text-xs">{f.inputType === 'pem' ? 'PEM' : f.inputType.replace('_base64', '').toUpperCase()}</Badge>
@@ -224,10 +245,36 @@ export function CertImportDialog({ open, onClose, onSuccess }: Props) {
                     </button>
                   </div>
                 ))}
-                <p className="text-xs text-muted-foreground">
-                  {cl.importMultiHint}
-                </p>
+                <div className="flex items-center gap-2 pt-1">
+                  <Button variant="outline" size="sm" onClick={() => certFileRef.current?.click()}>
+                    <Upload className="h-4 w-4 mr-1" />
+                    {cl.importAddMore}
+                  </Button>
+                  <p className="text-xs text-muted-foreground flex-1">
+                    {cl.importMultiHint}
+                  </p>
+                </div>
               </div>
+            )}
+
+            <input
+              ref={certFileRef}
+              type="file"
+              className="hidden"
+              accept=".pem,.crt,.cer,.der,.pfx,.p12,.jks,.p7b"
+              multiple
+              onChange={handleCertFiles}
+            />
+
+            {/* Paste toggle */}
+            {certFiles.length === 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setPasteMode(!pasteMode)}
+              >
+                {cl.importPaste}
+              </Button>
             )}
 
             {/* Paste mode */}

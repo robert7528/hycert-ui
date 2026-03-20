@@ -145,8 +145,10 @@ const en = {
       importTags: 'Tags',
       importTagsHint: 'Comma-separated, e.g. production, web',
       importNotes: 'Notes',
+      importDropHint: 'Drop certificate files here, or click to browse (multiple files supported)',
+      importAddMore: 'Add more',
       importPaste: 'Paste PEM',
-      importMultiHint: 'Multiple files supported. The system will auto-detect the server certificate and merge the chain.',
+      importMultiHint: 'Multiple files supported. Auto-detects server cert and merges chain.',
       importSubmit: 'Import',
       importSuccess: 'Certificate imported successfully',
       // Detail dialog

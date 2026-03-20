@@ -145,8 +145,10 @@ const zhTW = {
       importTags: '標籤',
       importTagsHint: '以逗號分隔，如: production, web',
       importNotes: '備註',
+      importDropHint: '拖放憑證檔案至此，或點擊選擇（支援多檔案）',
+      importAddMore: '繼續新增',
       importPaste: '貼上 PEM',
-      importMultiHint: '支援多檔案上傳，系統將自動識別 server 憑證並合併憑證鏈。',
+      importMultiHint: '支援多檔案，系統自動識別 server 憑證並合併憑證鏈。',
       importSubmit: '匯入',
       importSuccess: '憑證匯入成功',
       // Detail dialog
