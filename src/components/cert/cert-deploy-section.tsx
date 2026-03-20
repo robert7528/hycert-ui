@@ -5,7 +5,6 @@ import { useLocale } from '@/contexts/locale-context'
 import {
   Badge, Button, Input, Label, Textarea,
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
   ConfirmModal, toast,
 } from '@hysp/ui-kit'
 import { Plus, Pencil, Trash2, Loader2, Server } from 'lucide-react'
@@ -22,6 +21,30 @@ interface Props {
 }
 
 const SERVICE_OPTIONS = ['nginx', 'apache', 'tomcat', 'k8s', 'haproxy', 'iis', 'other'] as const
+const OS_OPTIONS = ['linux', 'windows'] as const
+
+interface DetailJson {
+  os?: string
+  cert_path?: string
+  key_path?: string
+  reload_cmd?: string
+}
+
+function parseDetail(raw: string): DetailJson {
+  if (!raw) return {}
+  try {
+    const obj = JSON.parse(raw)
+    return typeof obj === 'object' && obj !== null ? obj : {}
+  } catch {
+    // Legacy plain text — treat as cert_path
+    return raw ? { cert_path: raw } : {}
+  }
+}
+
+function formatDetail(d: DetailJson): string {
+  const hasContent = d.os || d.cert_path || d.key_path || d.reload_cmd
+  return hasContent ? JSON.stringify(d) : ''
+}
 
 function formatDate(iso: string | null) {
   if (!iso) return '—'
@@ -42,10 +65,14 @@ export function CertDeploySection({ certificateId, certificateName }: Props) {
   // Form fields
   const [host, setHost] = useState('')
   const [service, setService] = useState('nginx')
-  const [detail, setDetail] = useState('')
   const [port, setPort] = useState('')
   const [notes, setNotes] = useState('')
   const [status, setStatus] = useState('active')
+  // Structured detail fields
+  const [detailOs, setDetailOs] = useState('linux')
+  const [detailCertPath, setDetailCertPath] = useState('')
+  const [detailKeyPath, setDetailKeyPath] = useState('')
+  const [detailReloadCmd, setDetailReloadCmd] = useState('')
 
   const fetchList = useCallback(async () => {
     setLoading(true)
@@ -64,10 +91,13 @@ export function CertDeploySection({ certificateId, certificateName }: Props) {
   const resetForm = () => {
     setHost('')
     setService('nginx')
-    setDetail('')
     setPort('')
     setNotes('')
     setStatus('active')
+    setDetailOs('linux')
+    setDetailCertPath('')
+    setDetailKeyPath('')
+    setDetailReloadCmd('')
     setEditTarget(null)
     setFormOpen(false)
   }
@@ -81,17 +111,31 @@ export function CertDeploySection({ certificateId, certificateName }: Props) {
     setEditTarget(d)
     setHost(d.target_host)
     setService(d.target_service)
-    setDetail(d.target_detail)
     setPort(d.port ? String(d.port) : '')
     setNotes(d.notes)
     setStatus(d.status)
+    const detail = parseDetail(d.target_detail)
+    setDetailOs(detail.os || 'linux')
+    setDetailCertPath(detail.cert_path || '')
+    setDetailKeyPath(detail.key_path || '')
+    setDetailReloadCmd(detail.reload_cmd || '')
     setFormOpen(true)
+  }
+
+  const buildDetail = (): string => {
+    return formatDetail({
+      os: detailOs,
+      cert_path: detailCertPath || undefined,
+      key_path: detailKeyPath || undefined,
+      reload_cmd: detailReloadCmd || undefined,
+    })
   }
 
   const handleSubmit = async () => {
     if (!host.trim() || !service) return
     setSaving(true)
     try {
+      const detail = buildDetail()
       if (editTarget) {
         const req: UpdateDeploymentRequest = {
           target_host: host,
@@ -135,6 +179,23 @@ export function CertDeploySection({ certificateId, certificateName }: Props) {
     }
   }
 
+  // Render deployment detail info
+  const DetailInfo = ({ raw }: { raw: string }) => {
+    const d = parseDetail(raw)
+    if (!d.os && !d.cert_path && !d.key_path && !d.reload_cmd) {
+      // Legacy plain text
+      return raw ? <div className="text-xs text-muted-foreground">{raw}</div> : null
+    }
+    return (
+      <div className="text-xs text-muted-foreground space-y-0.5">
+        {d.os && <span className="mr-2">{d.os === 'windows' ? 'Windows' : 'Linux'}</span>}
+        {d.cert_path && <div>{cl.deployCertPath}: {d.cert_path}</div>}
+        {d.key_path && <div>{cl.deployKeyPath}: {d.key_path}</div>}
+        {d.reload_cmd && <div>{cl.deployReloadCmd}: <code>{d.reload_cmd}</code></div>}
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
@@ -172,14 +233,6 @@ export function CertDeploySection({ certificateId, certificateName }: Props) {
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">{cl.deployDetail}</Label>
-              <Input
-                value={detail}
-                onChange={e => setDetail(e.target.value)}
-                placeholder={cl.deployDetailPlaceholder}
-              />
-            </div>
-            <div className="space-y-1">
               <Label className="text-xs">{cl.deployPort}</Label>
               <Input
                 type="number"
@@ -188,6 +241,41 @@ export function CertDeploySection({ certificateId, certificateName }: Props) {
                 placeholder="443"
               />
             </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{cl.deployOs}</Label>
+              <Select value={detailOs} onValueChange={setDetailOs}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {OS_OPTIONS.map(o => (
+                    <SelectItem key={o} value={o}>{o === 'windows' ? 'Windows' : 'Linux'}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{cl.deployCertPath}</Label>
+              <Input
+                value={detailCertPath}
+                onChange={e => setDetailCertPath(e.target.value)}
+                placeholder={detailOs === 'windows' ? 'C:\\nginx\\ssl\\cert.pem' : '/etc/nginx/ssl/cert.pem'}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{cl.deployKeyPath}</Label>
+              <Input
+                value={detailKeyPath}
+                onChange={e => setDetailKeyPath(e.target.value)}
+                placeholder={detailOs === 'windows' ? 'C:\\nginx\\ssl\\key.pem' : '/etc/nginx/ssl/key.pem'}
+              />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">{cl.deployReloadCmd}</Label>
+            <Input
+              value={detailReloadCmd}
+              onChange={e => setDetailReloadCmd(e.target.value)}
+              placeholder={service === 'iis' ? 'iisreset /restart' : 'nginx -s reload'}
+            />
           </div>
           {editTarget && (
             <div className="space-y-1">
@@ -239,9 +327,7 @@ export function CertDeploySection({ certificateId, certificateName }: Props) {
                     {d.status === 'active' ? cl.deployStatusActive : cl.deployStatusRemoved}
                   </Badge>
                 </div>
-                {d.target_detail && (
-                  <div className="text-xs text-muted-foreground">{d.target_detail}</div>
-                )}
+                <DetailInfo raw={d.target_detail} />
                 <div className="text-xs text-muted-foreground">
                   {cl.deployDeployedBy}: {d.deployed_by || '—'} · {formatDate(d.deployed_at)}
                 </div>

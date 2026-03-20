@@ -21,6 +21,31 @@ function formatDate(iso: string | null) {
   return new Date(iso).toLocaleDateString('sv-SE')
 }
 
+function parseDetail(raw: string): Record<string, string> {
+  if (!raw) return {}
+  try {
+    const obj = JSON.parse(raw)
+    return typeof obj === 'object' && obj !== null ? obj : {}
+  } catch {
+    return raw ? { cert_path: raw } : {}
+  }
+}
+
+function DetailInfo({ raw, cl }: { raw: string; cl: any }) {
+  const d = parseDetail(raw)
+  if (!d.os && !d.cert_path && !d.key_path && !d.reload_cmd) {
+    return raw ? <div className="text-xs text-muted-foreground">{raw}</div> : null
+  }
+  return (
+    <div className="text-xs text-muted-foreground space-y-0.5">
+      {d.os && <span className="mr-2">{d.os === 'windows' ? 'Windows' : 'Linux'}</span>}
+      {d.cert_path && <div>{cl.deployCertPath}: {d.cert_path}</div>}
+      {d.key_path && <div>{cl.deployKeyPath}: {d.key_path}</div>}
+      {d.reload_cmd && <div>{cl.deployReloadCmd}: <code>{d.reload_cmd}</code></div>}
+    </div>
+  )
+}
+
 export function DeployList() {
   const { t } = useLocale()
   const cl = t.hycert.certList
@@ -135,9 +160,7 @@ export function DeployList() {
                         {d.status === 'active' ? cl.deployStatusActive : cl.deployStatusRemoved}
                       </Badge>
                     </div>
-                    {d.target_detail && (
-                      <div className="text-xs text-muted-foreground">{d.target_detail}</div>
-                    )}
+                    <DetailInfo raw={d.target_detail} cl={cl} />
                     <div className="text-xs text-muted-foreground">
                       {cl.deployCert}: {certNameMap.get(d.certificate_id) ?? `#${d.certificate_id}`}
                       {' · '}{cl.deployDeployedBy}: {d.deployed_by || '—'}
