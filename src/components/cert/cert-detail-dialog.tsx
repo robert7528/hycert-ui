@@ -7,6 +7,7 @@ import {
 } from '@hysp/ui-kit'
 import { Download, Loader2, X, ShieldCheck, Shield, ShieldAlert } from 'lucide-react'
 import { certCrudApi, certUtilityApi, type CertificateDTO, type ParseResponse } from '@/lib/cert-api'
+import { CertDeploySection } from './cert-deploy-section'
 
 interface Props {
   cert: CertificateDTO | null
@@ -250,6 +251,10 @@ export function CertDetailDialog({ cert, onClose }: Props) {
               <p className="text-sm text-muted-foreground">{cl.detailChainEmpty}</p>
             )}
           </div>
+
+          {/* Deployment targets */}
+          <Separator />
+          <CertDeploySection certificateId={cert.id} certificateName={cert.name} />
 
           {/* Download section */}
           <Separator />

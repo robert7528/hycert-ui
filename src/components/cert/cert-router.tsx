@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { CertToolbox } from './toolbox'
 import { CertList } from './cert-list'
+import { DeployList } from './deploy-list'
 
 export function CertRouter() {
   const [pathname, setPathname] = useState('')
@@ -18,6 +19,10 @@ export function CertRouter() {
 
   if (pathname.includes('/list')) {
     return <CertList />
+  }
+
+  if (pathname.includes('/deployments')) {
+    return <DeployList />
   }
 
   // Default: show toolbox

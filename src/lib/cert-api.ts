@@ -307,6 +307,86 @@ export const certCrudApi = {
   },
 }
 
+// ── Deployment Types ────────────────────────────────────────────────────────
+
+export interface DeploymentDTO {
+  id: number
+  certificate_id: number
+  target_host: string
+  target_service: string  // nginx | apache | tomcat | k8s
+  target_detail: string
+  port: number | null
+  status: string          // active | removed
+  deployed_at: string | null
+  deployed_by: string
+  notes: string
+  created_at: string
+  updated_at: string
+}
+
+export interface DeploymentListResponse {
+  items: DeploymentDTO[]
+  total: number
+  page: number
+  page_size: number
+  total_pages: number
+}
+
+export interface DeploymentListParams {
+  page?: number
+  page_size?: number
+  certificate_id?: number
+}
+
+export interface CreateDeploymentRequest {
+  certificate_id: number
+  target_host: string
+  target_service: string
+  target_detail?: string
+  port?: number
+  notes?: string
+}
+
+export interface UpdateDeploymentRequest {
+  target_host?: string
+  target_service?: string
+  target_detail?: string
+  port?: number
+  status?: string
+  notes?: string
+}
+
+export const deployCrudApi = {
+  create: (req: CreateDeploymentRequest) =>
+    crudFetch<DeploymentDTO>('/api/v1/adm/cert/deployments', {
+      method: 'POST',
+      body: JSON.stringify(req),
+    }),
+
+  list: (params: DeploymentListParams = {}) => {
+    const qs = new URLSearchParams()
+    if (params.page) qs.set('page', String(params.page))
+    if (params.page_size) qs.set('page_size', String(params.page_size))
+    if (params.certificate_id) qs.set('certificate_id', String(params.certificate_id))
+    const q = qs.toString()
+    return crudFetch<DeploymentListResponse>(`/api/v1/adm/cert/deployments${q ? `?${q}` : ''}`)
+  },
+
+  get: (id: number) =>
+    crudFetch<DeploymentDTO>(`/api/v1/adm/cert/deployments/${id}`),
+
+  update: (id: number, req: UpdateDeploymentRequest) =>
+    crudFetch<DeploymentDTO>(`/api/v1/adm/cert/deployments/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(req),
+    }),
+
+  delete: (id: number) =>
+    crudFetch<{ message: string }>(`/api/v1/adm/cert/deployments/${id}`, {
+      method: 'DELETE',
+    }),
+}
+
 // ── Utility API ─────────────────────────────────────────────────────────────
 
 export const certUtilityApi = {
