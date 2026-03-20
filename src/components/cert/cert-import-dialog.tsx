@@ -185,10 +185,12 @@ export function CertImportDialog({ open, onClose, onSuccess }: Props) {
 
   const hasCertContent = certFiles.length > 0 || pasteContent.trim().length > 0
 
-  // Auto-detect if password is needed (PFX/JKS binary formats)
-  const needsPassword = certFiles.some(f =>
+  // Auto-detect if password is needed
+  const needsCertPassword = certFiles.some(f =>
     ['pfx_base64', 'jks_base64'].includes(f.inputType)
   )
+  const keyIsEncrypted = keyContent.includes('ENCRYPTED') || keyContent.includes('Proc-Type')
+  const needsPassword = needsCertPassword || keyIsEncrypted
 
   const handleSubmit = async () => {
     if (!hasCertContent) return
@@ -380,17 +382,19 @@ export function CertImportDialog({ open, onClose, onSuccess }: Props) {
             )}
           </div>
 
-          {/* Password (only for PFX/JKS) */}
+          {/* Password (PFX/JKS or encrypted private key) */}
           {needsPassword && (
             <div className="space-y-2">
-              <Label>{cl.importPassword}</Label>
+              <Label>{needsCertPassword ? cl.importPassword : cl.importKeyPassword}</Label>
               <Input
                 type="password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder={t.hycert.toolbox.common.placeholderPassword}
               />
-              <p className="text-xs text-muted-foreground">{cl.importPasswordHint}</p>
+              <p className="text-xs text-muted-foreground">
+                {needsCertPassword ? cl.importPasswordHint : cl.importKeyPasswordHint}
+              </p>
             </div>
           )}
 

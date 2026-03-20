@@ -145,6 +145,8 @@ const zhTW = {
       importKeyPaste: '貼上私鑰 PEM',
       importPassword: '檔案密碼',
       importPasswordHint: '已偵測到 PFX/JKS 格式，請輸入檔案密碼。',
+      importKeyPassword: '私鑰密碼',
+      importKeyPasswordHint: '已偵測到加密私鑰，請輸入解密密碼。',
       importTags: '標籤',
       importTagsHint: '以逗號分隔，如: production, web',
       importNotes: '備註',

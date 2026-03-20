@@ -145,6 +145,8 @@ const en = {
       importKeyPaste: 'Paste PEM key',
       importPassword: 'File Password',
       importPasswordHint: 'PFX/JKS format detected. Please enter the file password.',
+      importKeyPassword: 'Private Key Password',
+      importKeyPasswordHint: 'Encrypted private key detected. Please enter the decryption password.',
       importTags: 'Tags',
       importTagsHint: 'Comma-separated, e.g. production, web',
       importNotes: 'Notes',
