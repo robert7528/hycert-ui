@@ -3,9 +3,9 @@
 import { useState, useRef } from 'react'
 import { useLocale } from '@/contexts/locale-context'
 import {
-  Button, Input, Label, Textarea, toast,
+  Badge, Button, Input, Label, Textarea, toast,
 } from '@hysp/ui-kit'
-import { Loader2, Upload } from 'lucide-react'
+import { Loader2, Upload, X } from 'lucide-react'
 import { certCrudApi } from '@/lib/cert-api'
 
 interface Props {
@@ -14,63 +14,110 @@ interface Props {
   onSuccess: () => void
 }
 
+interface CertFile {
+  name: string
+  content: string   // PEM text or base64 for binary
+  inputType: string // pem | der_base64 | pfx_base64 | ...
+  isBinary: boolean
+}
+
+async function readCertFile(file: File): Promise<CertFile> {
+  const ext = file.name.split('.').pop()?.toLowerCase() ?? ''
+  const binaryExts = ['pfx', 'p12', 'der', 'jks', 'p7b']
+
+  if (binaryExts.includes(ext)) {
+    const buf = await file.arrayBuffer()
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)))
+    const typeMap: Record<string, string> = {
+      pfx: 'pfx_base64', p12: 'pfx_base64', der: 'der_base64',
+      jks: 'jks_base64', p7b: 'p7b_base64',
+    }
+    return { name: file.name, content: base64, inputType: typeMap[ext] ?? '', isBinary: true }
+  }
+
+  // Text-based: PEM or ambiguous (.cer, .crt)
+  const text = await file.text()
+  if (text.includes('-----BEGIN')) {
+    return { name: file.name, content: text, inputType: 'pem', isBinary: false }
+  }
+
+  // Likely DER in .cer/.crt
+  const buf = await file.arrayBuffer()
+  const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)))
+  return { name: file.name, content: base64, inputType: 'der_base64', isBinary: true }
+}
+
+/** Merge multiple PEM/DER files into a single PEM string for the API */
+function mergeForImport(files: CertFile[]): { certificate: string; inputType: string } {
+  // Single file: send as-is
+  if (files.length === 1) {
+    return { certificate: files[0].content, inputType: files[0].inputType }
+  }
+
+  // Multiple files: merge all PEM text files into one PEM bundle
+  // Binary files (single) can be sent directly, but multiple must all be PEM-convertible
+  const allPem = files.every(f => !f.isBinary)
+  if (allPem) {
+    const merged = files.map(f => f.content.trim()).join('\n')
+    return { certificate: merged, inputType: 'pem' }
+  }
+
+  // If there's one binary file among multiple, only send the binary (others would need conversion)
+  // This case is unusual — user should use single PFX or all PEM files
+  const binary = files.find(f => f.isBinary)
+  if (binary) {
+    return { certificate: binary.content, inputType: binary.inputType }
+  }
+
+  return { certificate: files[0].content, inputType: files[0].inputType }
+}
+
 export function CertImportDialog({ open, onClose, onSuccess }: Props) {
   const { t } = useLocale()
   const cl = t.hycert.certList
 
-  const [certContent, setCertContent] = useState('')
+  const [certFiles, setCertFiles] = useState<CertFile[]>([])
   const [keyContent, setKeyContent] = useState('')
-  const [inputType, setInputType] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [tags, setTags] = useState('')
   const [notes, setNotes] = useState('')
   const [loading, setLoading] = useState(false)
-  const [certFileName, setCertFileName] = useState('')
+  const [pasteMode, setPasteMode] = useState(false)
+  const [pasteContent, setPasteContent] = useState('')
   const certFileRef = useRef<HTMLInputElement>(null)
   const keyFileRef = useRef<HTMLInputElement>(null)
 
   if (!open) return null
 
   const reset = () => {
-    setCertContent('')
+    setCertFiles([])
     setKeyContent('')
-    setInputType('')
     setPassword('')
     setName('')
     setTags('')
     setNotes('')
-    setCertFileName('')
+    setPasteMode(false)
+    setPasteContent('')
   }
 
-  const handleCertFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setCertFileName(file.name)
+  const handleCertFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
 
-    const ext = file.name.split('.').pop()?.toLowerCase() ?? ''
-    const binaryExts = ['pfx', 'p12', 'der', 'jks', 'p7b']
-
-    if (binaryExts.includes(ext)) {
-      const buf = await file.arrayBuffer()
-      const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)))
-      setCertContent(base64)
-      const typeMap: Record<string, string> = { pfx: 'pfx_base64', p12: 'pfx_base64', der: 'der_base64', jks: 'jks_base64', p7b: 'p7b_base64' }
-      setInputType(typeMap[ext] ?? '')
-    } else {
-      // Possibly PEM or ambiguous (.cer, .crt)
-      const text = await file.text()
-      if (text.includes('-----BEGIN')) {
-        setCertContent(text)
-        setInputType('pem')
-      } else {
-        // Likely DER in .cer/.crt
-        const buf = await file.arrayBuffer()
-        const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)))
-        setCertContent(base64)
-        setInputType('der_base64')
-      }
+    const newFiles: CertFile[] = []
+    for (let i = 0; i < files.length; i++) {
+      newFiles.push(await readCertFile(files[i]))
     }
+    setCertFiles(prev => [...prev, ...newFiles])
+    setPasteMode(false)
+
+    // Reset file input so same file can be re-selected
+    if (certFileRef.current) certFileRef.current.value = ''
+  }
+
+  const removeCertFile = (index: number) => {
+    setCertFiles(prev => prev.filter((_, i) => i !== index))
   }
 
   const handleKeyFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -80,16 +127,30 @@ export function CertImportDialog({ open, onClose, onSuccess }: Props) {
     setKeyContent(text)
   }
 
+  const hasCertContent = certFiles.length > 0 || pasteContent.trim().length > 0
+
   const handleSubmit = async () => {
-    if (!certContent) return
+    if (!hasCertContent) return
     setLoading(true)
     try {
       const tagsJson = tags.trim()
         ? JSON.stringify(tags.split(',').map(s => s.trim()).filter(Boolean))
         : '[]'
 
+      let certificate: string
+      let inputType: string | undefined
+
+      if (certFiles.length > 0) {
+        const merged = mergeForImport(certFiles)
+        certificate = merged.certificate
+        inputType = merged.inputType
+      } else {
+        certificate = pasteContent
+        inputType = undefined // auto-detect
+      }
+
       const resp = await certCrudApi.import({
-        certificate: certContent,
+        certificate,
         private_key: keyContent || undefined,
         input_type: inputType || undefined,
         password: password || undefined,
@@ -124,34 +185,58 @@ export function CertImportDialog({ open, onClose, onSuccess }: Props) {
             <p className="text-sm text-muted-foreground">{cl.importDesc}</p>
           </div>
 
-          {/* Certificate file */}
+          {/* Certificate files */}
           <div className="space-y-2">
             <Label>{cl.importCert}</Label>
             <div className="flex gap-2">
-              <Input
-                readOnly
-                value={certFileName}
-                placeholder="PEM / DER / PFX / JKS / P7B"
-                className="flex-1"
-              />
               <Button variant="outline" size="sm" onClick={() => certFileRef.current?.click()}>
                 <Upload className="h-4 w-4 mr-1" />
                 {t.hycert.toolbox.common.buttonUpload}
               </Button>
+              {certFiles.length === 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setPasteMode(!pasteMode)}
+                >
+                  {cl.importPaste}
+                </Button>
+              )}
               <input
                 ref={certFileRef}
                 type="file"
                 className="hidden"
-                accept=".pem,.crt,.cer,.der,.pfx,.p12,.jks,.p7b,.key"
-                onChange={handleCertFile}
+                accept=".pem,.crt,.cer,.der,.pfx,.p12,.jks,.p7b"
+                multiple
+                onChange={handleCertFiles}
               />
             </div>
-            {!certFileName && (
+
+            {/* File list */}
+            {certFiles.length > 0 && (
+              <div className="space-y-1">
+                {certFiles.map((f, i) => (
+                  <div key={i} className="flex items-center gap-2 text-sm bg-muted/50 rounded px-2 py-1">
+                    <Badge variant="outline" className="text-xs">{f.inputType === 'pem' ? 'PEM' : f.inputType.replace('_base64', '').toUpperCase()}</Badge>
+                    <span className="flex-1 truncate">{f.name}</span>
+                    <button onClick={() => removeCertFile(i)} className="text-muted-foreground hover:text-foreground">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+                <p className="text-xs text-muted-foreground">
+                  {cl.importMultiHint}
+                </p>
+              </div>
+            )}
+
+            {/* Paste mode */}
+            {certFiles.length === 0 && pasteMode && (
               <Textarea
-                placeholder="或貼上 PEM 內容..."
+                placeholder="-----BEGIN CERTIFICATE-----"
                 rows={4}
-                value={certContent}
-                onChange={e => { setCertContent(e.target.value); setInputType('') }}
+                value={pasteContent}
+                onChange={e => setPasteContent(e.target.value)}
               />
             )}
           </div>
@@ -210,7 +295,7 @@ export function CertImportDialog({ open, onClose, onSuccess }: Props) {
             <Button variant="outline" onClick={() => { reset(); onClose() }}>
               {cl.cancel}
             </Button>
-            <Button onClick={handleSubmit} disabled={!certContent || loading}>
+            <Button onClick={handleSubmit} disabled={!hasCertContent || loading}>
               {loading && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
               {cl.importSubmit}
             </Button>
