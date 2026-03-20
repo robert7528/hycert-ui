@@ -14,6 +14,18 @@ function getToken(): string | null {
   return sessionStorage.getItem(TOKEN_KEY) ?? Cookies.get(TOKEN_KEY) ?? null
 }
 
+/** Extract tenant code from JWT payload (claim "tc") */
+function getTenantId(): string {
+  const token = getToken()
+  if (!token) return ''
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    return payload.tc ?? ''
+  } catch {
+    return ''
+  }
+}
+
 async function certFetch<T>(path: string, init: RequestInit = {}): Promise<ApiResponse<T>> {
   const token = getToken()
 
@@ -26,7 +38,6 @@ async function certFetch<T>(path: string, init: RequestInit = {}): Promise<ApiRe
   const res = await fetch(`${_apiBase}${path}`, { ...init, headers })
 
   if (res.status === 401) {
-    // Redirect to parent shell login
     if (typeof window !== 'undefined') {
       window.location.href = '/hyadmin/login'
     }
@@ -39,6 +50,16 @@ async function certFetch<T>(path: string, init: RequestInit = {}): Promise<ApiRe
   }
 
   return body as ApiResponse<T>
+}
+
+/** certFetch with X-Tenant-ID header (for CRUD endpoints) */
+async function crudFetch<T>(path: string, init: RequestInit = {}): Promise<ApiResponse<T>> {
+  const tenantId = getTenantId()
+  const headers: Record<string, string> = {
+    ...(init.headers as Record<string, string>),
+  }
+  if (tenantId) headers['X-Tenant-ID'] = tenantId
+  return certFetch<T>(path, { ...init, headers })
 }
 
 // ── Utility API ─────────────────────────────────────────────────────────────
@@ -165,6 +186,121 @@ export interface DecryptKeyResponse {
   key_type: string
   bits: number
 }
+
+// ── CRUD Types ──────────────────────────────────────────────────────────────
+
+export interface CertificateDTO {
+  id: number
+  name: string
+  common_name: string
+  sans: string        // JSON array string
+  serial_number: string
+  issuer_cn: string
+  not_before: string
+  not_after: string
+  key_algorithm: string
+  fingerprint_sha256: string
+  status: string      // active | expired | revoked
+  source: string      // manual | csr | acme
+  has_private_key: boolean
+  key_encrypted: boolean
+  csr_id: number | null
+  tags: string        // JSON array string
+  notes: string
+  created_by: string
+  created_at: string
+  updated_at: string
+}
+
+export interface CertListResponse {
+  items: CertificateDTO[]
+  total: number
+  page: number
+  page_size: number
+  total_pages: number
+}
+
+export interface CertListParams {
+  page?: number
+  page_size?: number
+  status?: string
+  search?: string
+  expire_in?: number
+  sort_by?: string
+  sort_dir?: string
+}
+
+export interface CertImportRequest {
+  certificate: string
+  private_key?: string
+  input_type?: string
+  password?: string
+  name?: string
+  tags?: string
+  notes?: string
+}
+
+export interface CertImportResponse {
+  certificate: CertificateDTO
+  warnings?: { code: string; message: string }[]
+}
+
+export interface CertUpdateRequest {
+  name?: string
+  tags?: string
+  notes?: string
+}
+
+export interface CertDownloadResponse {
+  format: string
+  content?: string         // for PEM
+  content_base64?: string  // for binary formats
+  filename: string
+  chain_included?: boolean
+}
+
+export const certCrudApi = {
+  import: (req: CertImportRequest) =>
+    crudFetch<CertImportResponse>('/api/v1/adm/cert/certificates', {
+      method: 'POST',
+      body: JSON.stringify(req),
+    }),
+
+  list: (params: CertListParams = {}) => {
+    const qs = new URLSearchParams()
+    if (params.page) qs.set('page', String(params.page))
+    if (params.page_size) qs.set('page_size', String(params.page_size))
+    if (params.status) qs.set('status', params.status)
+    if (params.search) qs.set('search', params.search)
+    if (params.expire_in) qs.set('expire_in', String(params.expire_in))
+    if (params.sort_by) qs.set('sort_by', params.sort_by)
+    if (params.sort_dir) qs.set('sort_dir', params.sort_dir)
+    const q = qs.toString()
+    return crudFetch<CertListResponse>(`/api/v1/adm/cert/certificates${q ? `?${q}` : ''}`)
+  },
+
+  get: (id: number) =>
+    crudFetch<CertificateDTO>(`/api/v1/adm/cert/certificates/${id}`),
+
+  update: (id: number, req: CertUpdateRequest) =>
+    crudFetch<CertificateDTO>(`/api/v1/adm/cert/certificates/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(req),
+    }),
+
+  delete: (id: number) =>
+    crudFetch<{ message: string }>(`/api/v1/adm/cert/certificates/${id}`, {
+      method: 'DELETE',
+    }),
+
+  download: (id: number, format = 'pem', password?: string) => {
+    const qs = new URLSearchParams({ format })
+    if (password) qs.set('password', password)
+    return crudFetch<CertDownloadResponse>(`/api/v1/adm/cert/certificates/${id}/download?${qs}`)
+  },
+}
+
+// ── Utility API ─────────────────────────────────────────────────────────────
 
 export const certUtilityApi = {
   verify: (req: VerifyRequest) =>
