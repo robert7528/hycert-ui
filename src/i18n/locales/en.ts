@@ -178,7 +178,8 @@ const en = {
       detailDownloadDER: 'Download DER',
       detailPasswordRequired: 'Please enter export password',
       detailPasswordLabel: 'PFX/JKS Export Password',
-      detailNoKey: 'No private key available. Cannot export as PFX/JKS.',
+      detailIncludeKeyInPem: 'Include private key in PEM (for HAProxy)',
+      detailNoKey: 'No private key available. Cannot export as KEY/PFX/JKS.',
       // Edit dialog
       editTitle: 'Edit Certificate',
       editName: 'Display Name',

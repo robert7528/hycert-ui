@@ -62,6 +62,7 @@ export function CertDetailDialog({ cert, onClose }: Props) {
 
   const [downloading, setDownloading] = useState('')
   const [exportPassword, setExportPassword] = useState('')
+  const [includeKeyInPem, setIncludeKeyInPem] = useState(false)
   const [chainInfo, setChainInfo] = useState<ParseResponse | null>(null)
   const [chainLoading, setChainLoading] = useState(false)
 
@@ -97,7 +98,7 @@ export function CertDetailDialog({ cert, onClose }: Props) {
   const tags = parseTags(cert.tags)
 
   const handleDownload = async (format: string) => {
-    if ((format === 'pfx' || format === 'jks') && !cert.has_private_key) {
+    if ((format === 'pfx' || format === 'jks' || format === 'key') && !cert.has_private_key) {
       toast.error(cl.detailNoKey)
       return
     }
@@ -108,11 +109,10 @@ export function CertDetailDialog({ cert, onClose }: Props) {
 
     setDownloading(format)
     try {
-      const resp = await certCrudApi.download(
-        cert.id,
-        format,
-        (format === 'pfx' || format === 'jks') ? exportPassword : undefined
-      )
+      const opts: { password?: string; includeKey?: boolean } = {}
+      if (format === 'pfx' || format === 'jks') opts.password = exportPassword
+      if (format === 'pem' && includeKeyInPem) opts.includeKey = true
+      const resp = await certCrudApi.download(cert.id, format, opts)
       const data = resp.data!
 
       let blob: Blob
@@ -257,19 +257,61 @@ export function CertDetailDialog({ cert, onClose }: Props) {
             <h3 className="text-sm font-medium">{cl.detailDownload}</h3>
 
             {cert.has_private_key && (
-              <div className="space-y-2">
-                <Label>{cl.detailPasswordLabel}</Label>
-                <Input
-                  type="password"
-                  value={exportPassword}
-                  onChange={e => setExportPassword(e.target.value)}
-                  placeholder="PFX / JKS"
-                />
+              <div className="space-y-3">
+                {/* PFX/JKS password */}
+                <div className="space-y-2">
+                  <Label>{cl.detailPasswordLabel}</Label>
+                  <Input
+                    type="password"
+                    value={exportPassword}
+                    onChange={e => setExportPassword(e.target.value)}
+                    placeholder="PFX / JKS"
+                  />
+                </div>
+                {/* Include key in PEM (for HAProxy) */}
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={includeKeyInPem}
+                    onChange={e => setIncludeKeyInPem(e.target.checked)}
+                    className="rounded"
+                  />
+                  {cl.detailIncludeKeyInPem}
+                </label>
               </div>
             )}
 
             <div className="flex flex-wrap gap-2">
-              {['pem', 'der', ...(cert.has_private_key ? ['pfx', 'jks'] : [])].map(fmt => (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={!!downloading}
+                onClick={() => handleDownload('pem')}
+              >
+                {downloading === 'pem' ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Download className="h-4 w-4 mr-1" />}
+                PEM
+              </Button>
+              {cert.has_private_key && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!!downloading}
+                  onClick={() => handleDownload('key')}
+                >
+                  {downloading === 'key' ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Download className="h-4 w-4 mr-1" />}
+                  KEY
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={!!downloading}
+                onClick={() => handleDownload('der')}
+              >
+                {downloading === 'der' ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Download className="h-4 w-4 mr-1" />}
+                DER
+              </Button>
+              {cert.has_private_key && ['pfx', 'jks'].map(fmt => (
                 <Button
                   key={fmt}
                   variant="outline"
@@ -277,11 +319,7 @@ export function CertDetailDialog({ cert, onClose }: Props) {
                   disabled={!!downloading}
                   onClick={() => handleDownload(fmt)}
                 >
-                  {downloading === fmt ? (
-                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                  ) : (
-                    <Download className="h-4 w-4 mr-1" />
-                  )}
+                  {downloading === fmt ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Download className="h-4 w-4 mr-1" />}
                   {fmt.toUpperCase()}
                 </Button>
               ))}

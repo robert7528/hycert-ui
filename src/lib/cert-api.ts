@@ -299,9 +299,10 @@ export const certCrudApi = {
       body: JSON.stringify({ private_key: privateKey, password: password || undefined }),
     }),
 
-  download: (id: number, format = 'pem', password?: string) => {
+  download: (id: number, format = 'pem', opts?: { password?: string; includeKey?: boolean }) => {
     const qs = new URLSearchParams({ format })
-    if (password) qs.set('password', password)
+    if (opts?.password) qs.set('password', opts.password)
+    if (opts?.includeKey) qs.set('include_key', 'true')
     return crudFetch<CertDownloadResponse>(`/api/v1/adm/cert/certificates/${id}/download?${qs}`)
   },
 }

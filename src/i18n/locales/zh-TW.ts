@@ -178,7 +178,8 @@ const zhTW = {
       detailDownloadDER: '下載 DER',
       detailPasswordRequired: '請輸入匯出密碼',
       detailPasswordLabel: 'PFX/JKS 匯出密碼',
-      detailNoKey: '此憑證無私鑰，無法匯出 PFX/JKS 格式。',
+      detailIncludeKeyInPem: '合併私鑰到 PEM（適用於 HAProxy）',
+      detailNoKey: '此憑證無私鑰，無法匯出 KEY/PFX/JKS 格式。',
       // Edit dialog
       editTitle: '編輯憑證',
       editName: '顯示名稱',
