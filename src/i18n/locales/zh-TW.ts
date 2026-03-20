@@ -109,7 +109,7 @@ const zhTW = {
     certList: {
       title: '憑證管理',
       buttonImport: '匯入憑證',
-      searchPlaceholder: '搜尋 CN 或 SAN...',
+      searchPlaceholder: '搜尋名稱、CN 或 SAN...',
       filterAll: '全部',
       filterActive: '有效',
       filterExpired: '已過期',

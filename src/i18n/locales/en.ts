@@ -109,7 +109,7 @@ const en = {
     certList: {
       title: 'Certificate Management',
       buttonImport: 'Import Certificate',
-      searchPlaceholder: 'Search CN or SAN...',
+      searchPlaceholder: 'Search name, CN or SAN...',
       filterAll: 'All',
       filterActive: 'Active',
       filterExpired: 'Expired',
