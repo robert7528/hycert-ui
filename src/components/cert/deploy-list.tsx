@@ -58,7 +58,7 @@ export function DeployList() {
 
   // Cert filter
   const [certs, setCerts] = useState<CertificateDTO[]>([])
-  const [certFilter, setCertFilter] = useState<string>('')
+  const [certFilter, setCertFilter] = useState<string>('all')
   const [deleteTarget, setDeleteTarget] = useState<DeploymentDTO | null>(null)
 
   // Cert name lookup
@@ -77,7 +77,7 @@ export function DeployList() {
     setLoading(true)
     try {
       const params: DeploymentListParams = { page, page_size: pageSize }
-      if (certFilter) params.certificate_id = parseInt(certFilter)
+      if (certFilter && certFilter !== 'all') params.certificate_id = parseInt(certFilter)
       const resp = await deployCrudApi.list(params)
       const data = resp.data!
       setDeployments(data.items ?? [])
@@ -118,7 +118,7 @@ export function DeployList() {
               <SelectValue placeholder={cl.deployAllCerts} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">{cl.deployAllCerts}</SelectItem>
+              <SelectItem value="all">{cl.deployAllCerts}</SelectItem>
               {certs.map(c => (
                 <SelectItem key={c.id} value={String(c.id)}>
                   {c.name || c.common_name}
