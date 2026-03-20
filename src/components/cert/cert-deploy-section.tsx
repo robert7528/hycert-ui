@@ -4,9 +4,9 @@ import { useState, useEffect, useCallback } from 'react'
 import { useLocale } from '@/contexts/locale-context'
 import {
   Badge, Button, Input, Label, Textarea,
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
   ConfirmModal, toast,
 } from '@hysp/ui-kit'
+import { NativeSelect } from '@/components/ui/native-select'
 import { Plus, Pencil, Trash2, Loader2, Server } from 'lucide-react'
 import {
   deployCrudApi,
@@ -223,14 +223,9 @@ export function CertDeploySection({ certificateId, certificateName }: Props) {
             </div>
             <div className="space-y-1">
               <Label className="text-xs">{cl.deployService}</Label>
-              <Select value={service} onValueChange={setService}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {SERVICE_OPTIONS.map(s => (
-                    <SelectItem key={s} value={s}>{s}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <NativeSelect value={service} onChange={setService}>
+                {SERVICE_OPTIONS.map(s => (<option key={s} value={s}>{s}</option>))}
+              </NativeSelect>
             </div>
             <div className="space-y-1">
               <Label className="text-xs">{cl.deployPort}</Label>
@@ -243,14 +238,9 @@ export function CertDeploySection({ certificateId, certificateName }: Props) {
             </div>
             <div className="space-y-1">
               <Label className="text-xs">{cl.deployOs}</Label>
-              <Select value={detailOs} onValueChange={setDetailOs}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {OS_OPTIONS.map(o => (
-                    <SelectItem key={o} value={o}>{o === 'windows' ? 'Windows' : 'Linux'}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <NativeSelect value={detailOs} onChange={setDetailOs}>
+                {OS_OPTIONS.map(o => (<option key={o} value={o}>{o === 'windows' ? 'Windows' : 'Linux'}</option>))}
+              </NativeSelect>
             </div>
             <div className="space-y-1">
               <Label className="text-xs">{cl.deployCertPath}</Label>
@@ -280,13 +270,10 @@ export function CertDeploySection({ certificateId, certificateName }: Props) {
           {editTarget && (
             <div className="space-y-1">
               <Label className="text-xs">{cl.deployStatus}</Label>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">{cl.deployStatusActive}</SelectItem>
-                  <SelectItem value="removed">{cl.deployStatusRemoved}</SelectItem>
-                </SelectContent>
-              </Select>
+              <NativeSelect value={status} onChange={setStatus} className="w-[180px]">
+                <option value="active">{cl.deployStatusActive}</option>
+                <option value="removed">{cl.deployStatusRemoved}</option>
+              </NativeSelect>
             </div>
           )}
           <div className="space-y-1">

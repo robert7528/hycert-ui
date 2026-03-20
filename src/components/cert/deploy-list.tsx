@@ -4,9 +4,9 @@ import { useState, useEffect, useCallback } from 'react'
 import { useLocale } from '@/contexts/locale-context'
 import {
   Badge, Button, Card, CardContent, Input, Label, Textarea,
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
   ConfirmModal, toast,
 } from '@hysp/ui-kit'
+import { NativeSelect } from '@/components/ui/native-select'
 import {
   Search, Pencil, Trash2, Plus, Loader2, Server,
   ChevronLeft, ChevronRight,
@@ -244,17 +244,12 @@ export function DeployList() {
           />
         </div>
         <div className="w-[220px]">
-          <Select value={certFilter} onValueChange={v => { setCertFilter(v); setPage(1) }}>
-            <SelectTrigger><SelectValue placeholder={cl.deployAllCerts} /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{cl.deployAllCerts}</SelectItem>
-              {certs.map(c => (
-                <SelectItem key={c.id} value={String(c.id)}>
-                  {c.name || c.common_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <NativeSelect value={certFilter} onChange={v => { setCertFilter(v); setPage(1) }}>
+            <option value="all">{cl.deployAllCerts}</option>
+            {certs.map(c => (
+              <option key={c.id} value={String(c.id)}>{c.name || c.common_name}</option>
+            ))}
+          </NativeSelect>
         </div>
         {total > 0 && (
           <span className="text-sm text-muted-foreground ml-auto">
@@ -273,16 +268,12 @@ export function DeployList() {
             {!editTarget && (
               <div className="space-y-1">
                 <Label className="text-xs">{cl.deployCert}</Label>
-                <Select value={formCertId} onValueChange={setFormCertId}>
-                  <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                  <SelectContent>
-                    {certs.map(c => (
-                      <SelectItem key={c.id} value={String(c.id)}>
-                        {c.name || c.common_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <NativeSelect value={formCertId} onChange={setFormCertId}>
+                  <option value="">—</option>
+                  {certs.map(c => (
+                    <option key={c.id} value={String(c.id)}>{c.name || c.common_name}</option>
+                  ))}
+                </NativeSelect>
               </div>
             )}
             <div className="grid grid-cols-2 gap-3">
@@ -292,12 +283,9 @@ export function DeployList() {
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">{cl.deployService}</Label>
-                <Select value={service} onValueChange={setService}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {SERVICE_OPTIONS.map(s => (<SelectItem key={s} value={s}>{s}</SelectItem>))}
-                  </SelectContent>
-                </Select>
+                <NativeSelect value={service} onChange={setService}>
+                  {SERVICE_OPTIONS.map(s => (<option key={s} value={s}>{s}</option>))}
+                </NativeSelect>
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">{cl.deployPort}</Label>
@@ -305,12 +293,9 @@ export function DeployList() {
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">{cl.deployOs}</Label>
-                <Select value={detailOs} onValueChange={setDetailOs}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {OS_OPTIONS.map(o => (<SelectItem key={o} value={o}>{o === 'windows' ? 'Windows' : 'Linux'}</SelectItem>))}
-                  </SelectContent>
-                </Select>
+                <NativeSelect value={detailOs} onChange={setDetailOs}>
+                  {OS_OPTIONS.map(o => (<option key={o} value={o}>{o === 'windows' ? 'Windows' : 'Linux'}</option>))}
+                </NativeSelect>
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">{cl.deployCertPath}</Label>
@@ -328,13 +313,10 @@ export function DeployList() {
             {editTarget && (
               <div className="space-y-1">
                 <Label className="text-xs">{cl.deployStatus}</Label>
-                <Select value={status} onValueChange={setStatus}>
-                  <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">{cl.deployStatusActive}</SelectItem>
-                    <SelectItem value="removed">{cl.deployStatusRemoved}</SelectItem>
-                  </SelectContent>
-                </Select>
+                <NativeSelect value={status} onChange={setStatus} className="w-[180px]">
+                  <option value="active">{cl.deployStatusActive}</option>
+                  <option value="removed">{cl.deployStatusRemoved}</option>
+                </NativeSelect>
               </div>
             )}
             <div className="space-y-1">
