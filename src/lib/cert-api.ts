@@ -336,6 +336,8 @@ export interface DeploymentListParams {
   page?: number
   page_size?: number
   certificate_id?: number
+  search?: string
+  status?: string
 }
 
 export interface CreateDeploymentRequest {
@@ -368,6 +370,8 @@ export const deployCrudApi = {
     if (params.page) qs.set('page', String(params.page))
     if (params.page_size) qs.set('page_size', String(params.page_size))
     if (params.certificate_id) qs.set('certificate_id', String(params.certificate_id))
+    if (params.search) qs.set('search', params.search)
+    if (params.status) qs.set('status', params.status)
     const q = qs.toString()
     return crudFetch<DeploymentListResponse>(`/api/v1/adm/cert/deployments${q ? `?${q}` : ''}`)
   },
