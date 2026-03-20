@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useLocale } from '@/contexts/locale-context'
 import {
   Badge, Button, Input, Label, Separator, toast,
 } from '@hysp/ui-kit'
-import { Download, Loader2, X } from 'lucide-react'
-import { certCrudApi, type CertificateDTO } from '@/lib/cert-api'
+import { Download, Loader2, X, ShieldCheck, Shield, ShieldAlert } from 'lucide-react'
+import { certCrudApi, certUtilityApi, type CertificateDTO, type ParseResponse } from '@/lib/cert-api'
 
 interface Props {
   cert: CertificateDTO | null
@@ -14,7 +14,7 @@ interface Props {
 }
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('sv-SE') // YYYY-MM-DD
+  return new Date(iso).toLocaleDateString('sv-SE')
 }
 
 function parseTags(tagsStr: string): string[] {
@@ -41,12 +41,55 @@ function statusVariant(status: string): 'default' | 'secondary' | 'destructive' 
   return 'secondary'
 }
 
+function roleIcon(role: string) {
+  if (role === 'root') return <ShieldCheck className="h-4 w-4 text-green-600" />
+  if (role === 'intermediate') return <Shield className="h-4 w-4 text-blue-500" />
+  return <ShieldAlert className="h-4 w-4 text-orange-500" />
+}
+
+function roleLabel(role: string, t: any) {
+  const labels: Record<string, string> = {
+    leaf: t.hycert.certList.detailRoleLeaf,
+    intermediate: t.hycert.certList.detailRoleIntermediate,
+    root: t.hycert.certList.detailRoleRoot,
+  }
+  return labels[role] ?? role
+}
+
 export function CertDetailDialog({ cert, onClose }: Props) {
   const { t } = useLocale()
   const cl = t.hycert.certList
 
   const [downloading, setDownloading] = useState('')
   const [exportPassword, setExportPassword] = useState('')
+  const [chainInfo, setChainInfo] = useState<ParseResponse | null>(null)
+  const [chainLoading, setChainLoading] = useState(false)
+
+  // Load chain info when cert changes
+  useEffect(() => {
+    if (!cert) {
+      setChainInfo(null)
+      return
+    }
+    let cancelled = false
+    ;(async () => {
+      setChainLoading(true)
+      try {
+        // Download PEM (contains full chain), then parse it
+        const dlResp = await certCrudApi.download(cert.id, 'pem')
+        const pem = dlResp.data?.content
+        if (pem && !cancelled) {
+          const parseResp = await certUtilityApi.parse({ input: pem })
+          if (!cancelled) setChainInfo(parseResp.data ?? null)
+        }
+      } catch {
+        // Non-critical — chain info is supplementary
+      } finally {
+        if (!cancelled) setChainLoading(false)
+      }
+    })()
+    return () => { cancelled = true }
+  }, [cert?.id])
 
   if (!cert) return null
 
@@ -72,7 +115,6 @@ export function CertDetailDialog({ cert, onClose }: Props) {
       )
       const data = resp.data!
 
-      // Trigger browser download
       let blob: Blob
       if (data.content) {
         blob = new Blob([data.content], { type: 'application/x-pem-file' })
@@ -124,6 +166,7 @@ export function CertDetailDialog({ cert, onClose }: Props) {
 
           <Separator />
 
+          {/* Basic info */}
           <div className="space-y-3">
             <Row label={cl.columnCN}>{cert.common_name}</Row>
             <Row label={cl.columnIssuer}>{cert.issuer_cn}</Row>
@@ -168,9 +211,48 @@ export function CertDetailDialog({ cert, onClose }: Props) {
             {cert.notes && <Row label={cl.detailNotes}>{cert.notes}</Row>}
           </div>
 
+          {/* Chain info */}
           <Separator />
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium">{cl.detailChain}</h3>
+            {chainLoading ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {cl.loading}
+              </div>
+            ) : chainInfo && chainInfo.certificates.length > 0 ? (
+              <div className="space-y-2">
+                {chainInfo.certificates.map((c, i) => (
+                  <div key={i} className="flex items-start gap-3 text-sm border rounded-lg p-3">
+                    <div className="mt-0.5">{roleIcon(c.role)}</div>
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium truncate">{c.subject.cn}</span>
+                        <Badge variant="outline" className="text-xs shrink-0">{roleLabel(c.role, t)}</Badge>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {t.hycert.toolbox.result.issuer}: {c.issuer.cn}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {t.hycert.toolbox.result.validity}: {formatDate(c.validity.not_before)} — {formatDate(c.validity.not_after)}
+                        {c.validity.is_expired && (
+                          <Badge variant="destructive" className="ml-2 text-xs">{t.hycert.toolbox.result.expired}</Badge>
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {t.hycert.toolbox.result.algorithm}: {c.key_info.algorithm} {c.key_info.bits}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">{cl.detailChainEmpty}</p>
+            )}
+          </div>
 
           {/* Download section */}
+          <Separator />
           <div className="space-y-3">
             <h3 className="text-sm font-medium">{cl.detailDownload}</h3>
 
