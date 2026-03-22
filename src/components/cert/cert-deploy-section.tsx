@@ -7,12 +7,17 @@ import {
   ConfirmModal, toast,
 } from '@hysp/ui-kit'
 import { NativeSelect } from '@/components/ui/native-select'
-import { Plus, Pencil, Trash2, Loader2, Server } from 'lucide-react'
+import {
+  Plus, Pencil, Trash2, Loader2, Server,
+  ChevronDown, ChevronUp,
+  CheckCircle2, XCircle, Clock, RotateCw,
+} from 'lucide-react'
 import {
   deployCrudApi,
   type DeploymentDTO,
   type CreateDeploymentRequest,
   type UpdateDeploymentRequest,
+  type DeploymentHistoryItem,
 } from '@/lib/cert-api'
 
 interface Props {
@@ -51,6 +56,79 @@ function formatDate(iso: string | null) {
   return new Date(iso).toLocaleDateString('sv-SE')
 }
 
+function formatDateTime(iso: string | null) {
+  if (!iso) return '—'
+  const d = new Date(iso)
+  return `${d.toLocaleDateString('sv-SE')} ${d.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`
+}
+
+function DeployStatusBadge({ status, cl }: { status: string; cl: any }) {
+  switch (status) {
+    case 'deployed':
+      return <Badge variant="default" className="text-xs bg-green-600"><CheckCircle2 className="h-3 w-3 mr-1" />{cl.deployAgentDeployed}</Badge>
+    case 'failed':
+      return <Badge variant="destructive" className="text-xs"><XCircle className="h-3 w-3 mr-1" />{cl.deployAgentFailed}</Badge>
+    case 'deploying':
+      return <Badge variant="secondary" className="text-xs"><RotateCw className="h-3 w-3 mr-1 animate-spin" />{cl.deployAgentDeploying}</Badge>
+    default:
+      return <Badge variant="outline" className="text-xs"><Clock className="h-3 w-3 mr-1" />{cl.deployAgentPending}</Badge>
+  }
+}
+
+function HistoryPanel({ deploymentId, cl }: { deploymentId: number; cl: any }) {
+  const [items, setItems] = useState<DeploymentHistoryItem[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    deployCrudApi.history(deploymentId, { page_size: 10 })
+      .then(resp => setItems(resp.data?.items ?? []))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [deploymentId])
+
+  if (loading) {
+    return <div className="py-2 flex justify-center"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>
+  }
+
+  if (items.length === 0) {
+    return <p className="text-xs text-muted-foreground py-2">{cl.deployHistoryEmpty}</p>
+  }
+
+  return (
+    <div className="mt-2 border rounded-md overflow-hidden">
+      <table className="w-full text-xs">
+        <thead className="bg-muted/50">
+          <tr>
+            <th className="text-left px-2 py-1.5 font-medium">{cl.deployHistoryTime}</th>
+            <th className="text-left px-2 py-1.5 font-medium">{cl.deployHistoryAction}</th>
+            <th className="text-left px-2 py-1.5 font-medium">{cl.deployHistoryStatus}</th>
+            <th className="text-left px-2 py-1.5 font-medium">{cl.deployHistoryFingerprint}</th>
+            <th className="text-left px-2 py-1.5 font-medium">{cl.deployHistoryDuration}</th>
+            <th className="text-left px-2 py-1.5 font-medium">{cl.deployHistoryError}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map(h => (
+            <tr key={h.id} className="border-t">
+              <td className="px-2 py-1.5 whitespace-nowrap">{formatDateTime(h.deployed_at)}</td>
+              <td className="px-2 py-1.5">{h.action}</td>
+              <td className="px-2 py-1.5">
+                {h.status === 'success'
+                  ? <span className="text-green-600 font-medium">{cl.deployHistorySuccess}</span>
+                  : <span className="text-destructive font-medium">{cl.deployHistoryFailed}</span>
+                }
+              </td>
+              <td className="px-2 py-1.5 font-mono">{h.fingerprint ? h.fingerprint.slice(0, 19) + '…' : '—'}</td>
+              <td className="px-2 py-1.5">{h.duration_ms != null ? `${h.duration_ms}ms` : '—'}</td>
+              <td className="px-2 py-1.5 text-destructive max-w-[200px] truncate">{h.error_message || ''}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
 export function CertDeploySection({ certificateId, certificateName }: Props) {
   const { t } = useLocale()
   const cl = t.hycert.certList
@@ -61,6 +139,7 @@ export function CertDeploySection({ certificateId, certificateName }: Props) {
   const [editTarget, setEditTarget] = useState<DeploymentDTO | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<DeploymentDTO | null>(null)
   const [saving, setSaving] = useState(false)
+  const [expandedId, setExpandedId] = useState<number | null>(null)
 
   // Form fields
   const [host, setHost] = useState('')
@@ -300,34 +379,57 @@ export function CertDeploySection({ certificateId, certificateName }: Props) {
       ) : (
         <div className="space-y-2">
           {deployments.map(d => (
-            <div key={d.id} className="flex items-start gap-3 text-sm border rounded-lg p-3">
-              <Server className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
-              <div className="flex-1 min-w-0 space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{d.target_host}</span>
-                  <Badge variant="outline" className="text-xs">{d.target_service}</Badge>
-                  {d.port && <span className="text-xs text-muted-foreground">:{d.port}</span>}
-                  <Badge
-                    variant={d.status === 'active' ? 'default' : 'secondary'}
-                    className="text-xs"
+            <div key={d.id} className="border rounded-lg">
+              <div className="flex items-start gap-3 text-sm p-3">
+                <Server className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+                <div className="flex-1 min-w-0 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{d.target_host}</span>
+                    <Badge variant="outline" className="text-xs">{d.target_service}</Badge>
+                    {d.port && <span className="text-xs text-muted-foreground">:{d.port}</span>}
+                    <Badge
+                      variant={d.status === 'active' ? 'default' : 'secondary'}
+                      className="text-xs"
+                    >
+                      {d.status === 'active' ? cl.deployStatusActive : cl.deployStatusRemoved}
+                    </Badge>
+                    <DeployStatusBadge status={d.deploy_status} cl={cl} />
+                  </div>
+                  <DetailInfo raw={d.target_detail} />
+                  <div className="text-xs text-muted-foreground">
+                    {d.last_fingerprint && (
+                      <>{cl.deployFingerprint}: <span className="font-mono">{d.last_fingerprint.slice(0, 19)}…</span> · </>
+                    )}
+                    {d.last_deployed_at && (
+                      <>{cl.deployLastDeployedAt}: {formatDateTime(d.last_deployed_at)} · </>
+                    )}
+                    {cl.deployDeployedBy}: {d.deployed_by || '—'} · {formatDate(d.deployed_at)}
+                  </div>
+                  {d.notes && <div className="text-xs text-muted-foreground">{d.notes}</div>}
+                </div>
+                <div className="flex gap-1 shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setExpandedId(expandedId === d.id ? null : d.id)}
+                    title={cl.deployHistory}
                   >
-                    {d.status === 'active' ? cl.deployStatusActive : cl.deployStatusRemoved}
-                  </Badge>
+                    {expandedId === d.id ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => openEdit(d)}>
+                    <Pencil className="h-3 w-3" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(d)}>
+                    <Trash2 className="h-3 w-3 text-destructive" />
+                  </Button>
                 </div>
-                <DetailInfo raw={d.target_detail} />
-                <div className="text-xs text-muted-foreground">
-                  {cl.deployDeployedBy}: {d.deployed_by || '—'} · {formatDate(d.deployed_at)}
+              </div>
+              {expandedId === d.id && (
+                <div className="px-3 pb-3 pt-0">
+                  <div className="text-xs font-medium mb-1">{cl.deployHistory}</div>
+                  <HistoryPanel deploymentId={d.id} cl={cl} />
                 </div>
-                {d.notes && <div className="text-xs text-muted-foreground">{d.notes}</div>}
-              </div>
-              <div className="flex gap-1 shrink-0">
-                <Button variant="ghost" size="sm" onClick={() => openEdit(d)}>
-                  <Pencil className="h-3 w-3" />
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(d)}>
-                  <Trash2 className="h-3 w-3 text-destructive" />
-                </Button>
-              </div>
+              )}
             </div>
           ))}
         </div>

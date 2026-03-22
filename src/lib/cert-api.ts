@@ -392,15 +392,43 @@ export interface DeploymentDTO {
   id: number
   certificate_id: number
   target_host: string
-  target_service: string  // nginx | apache | tomcat | k8s
+  target_service: string  // nginx | apache | tomcat | k8s | haproxy | iis | other
   target_detail: string
   port: number | null
   status: string          // active | removed
+  deploy_status: string   // pending | deploying | deployed | failed
+  last_fingerprint: string
+  last_deployed_at: string | null
+  agent_token_id: number | null
   deployed_at: string | null
   deployed_by: string
   notes: string
   created_at: string
   updated_at: string
+}
+
+// ── Deployment History Types ────────────────────────────────────────────────
+
+export interface DeploymentHistoryItem {
+  id: number
+  deployment_id: number
+  certificate_id: number
+  agent_token_id: number | null
+  fingerprint: string
+  action: string        // deploy | rollback | verify
+  status: string        // success | failed
+  error_message?: string
+  duration_ms?: number
+  deployed_at: string
+  created_at: string
+}
+
+export interface DeploymentHistoryResponse {
+  items: DeploymentHistoryItem[]
+  total: number
+  page: number
+  page_size: number
+  total_pages: number
 }
 
 export interface DeploymentListResponse {
@@ -468,6 +496,14 @@ export const deployCrudApi = {
     crudFetch<{ message: string }>(`/api/v1/adm/cert/deployments/${id}`, {
       method: 'DELETE',
     }),
+
+  history: (id: number, params?: { page?: number; page_size?: number }) => {
+    const qs = new URLSearchParams()
+    if (params?.page) qs.set('page', String(params.page))
+    if (params?.page_size) qs.set('page_size', String(params.page_size))
+    const q = qs.toString()
+    return crudFetch<DeploymentHistoryResponse>(`/api/v1/adm/cert/deployments/${id}/history${q ? `?${q}` : ''}`)
+  },
 }
 
 // ── Utility API ─────────────────────────────────────────────────────────────
