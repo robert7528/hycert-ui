@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { CertToolbox } from './toolbox'
 import { CertList } from './cert-list'
 import { DeployList } from './deploy-list'
+import { CSRList } from './csr-list'
 
 export function CertRouter() {
   const [pathname, setPathname] = useState('')
@@ -19,6 +20,10 @@ export function CertRouter() {
 
   if (pathname.includes('/list')) {
     return <CertList />
+  }
+
+  if (pathname.includes('/csrs')) {
+    return <CSRList />
   }
 
   if (pathname.includes('/deployments')) {

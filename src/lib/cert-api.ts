@@ -307,6 +307,85 @@ export const certCrudApi = {
   },
 }
 
+// ── CSR Types ───────────────────────────────────────────────────────────────
+
+export interface CSRDTO {
+  id: number
+  common_name: string
+  sans: string          // JSON array string
+  subject: string       // JSON object string {o, ou, c, st, l}
+  key_algorithm: string
+  key_bits: number
+  has_private_key: boolean
+  status: string        // pending | signed
+  certificate_id: number | null
+  created_by: string
+  created_at: string
+  updated_at: string
+}
+
+export interface CSRListResponse {
+  items: CSRDTO[]
+  total: number
+  page: number
+  page_size: number
+  total_pages: number
+}
+
+export interface CSRListParams {
+  page?: number
+  page_size?: number
+  status?: string
+}
+
+export interface CreateCSRRequest {
+  domain: string
+  sans?: string[]
+  subject?: {
+    o?: string
+    ou?: string
+    c?: string
+    st?: string
+    l?: string
+  }
+  key_type?: string
+  key_bits?: number
+}
+
+export interface CSRDownloadResponse {
+  format: string
+  content: string
+  filename: string
+}
+
+export const csrCrudApi = {
+  generate: (req: CreateCSRRequest) =>
+    crudFetch<CSRDTO>('/api/v1/adm/cert/csrs', {
+      method: 'POST',
+      body: JSON.stringify(req),
+    }),
+
+  list: (params: CSRListParams = {}) => {
+    const qs = new URLSearchParams()
+    if (params.page) qs.set('page', String(params.page))
+    if (params.page_size) qs.set('page_size', String(params.page_size))
+    if (params.status) qs.set('status', params.status)
+    const q = qs.toString()
+    return crudFetch<CSRListResponse>(`/api/v1/adm/cert/csrs${q ? `?${q}` : ''}`)
+  },
+
+  get: (id: number) =>
+    crudFetch<CSRDTO>(`/api/v1/adm/cert/csrs/${id}`),
+
+  delete: (id: number) =>
+    crudFetch<{ message: string }>(`/api/v1/adm/cert/csrs/${id}`, {
+      method: 'DELETE',
+    }),
+
+  download: (id: number) =>
+    crudFetch<CSRDownloadResponse>(`/api/v1/adm/cert/csrs/${id}/download`),
+}
+
 // ── Deployment Types ────────────────────────────────────────────────────────
 
 export interface DeploymentDTO {
