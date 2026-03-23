@@ -5,6 +5,7 @@ import { CertToolbox } from './toolbox'
 import { CertList } from './cert-list'
 import { DeployList } from './deploy-list'
 import { CSRList } from './csr-list'
+import { AgentList } from './agent-list'
 
 export function CertRouter() {
   const [pathname, setPathname] = useState('')
@@ -28,6 +29,10 @@ export function CertRouter() {
 
   if (pathname.includes('/deployments')) {
     return <DeployList />
+  }
+
+  if (pathname.includes('/agents')) {
+    return <AgentList />
   }
 
   // Default: show toolbox

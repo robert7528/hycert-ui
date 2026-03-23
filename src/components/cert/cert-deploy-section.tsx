@@ -7,6 +7,7 @@ import {
   ConfirmModal, toast,
 } from '@hysp/ui-kit'
 import { NativeSelect } from '@/components/ui/native-select'
+import { SearchSelect } from '@/components/ui/search-select'
 import {
   Plus, Pencil, Trash2, Loader2, Server,
   ChevronDown, ChevronUp,
@@ -306,18 +307,21 @@ export function CertDeploySection({ certificateId, certificateName }: Props) {
           </h4>
           <div className="space-y-1">
             <Label className="text-xs">{cl.deployAgent}</Label>
-            <NativeSelect value={formAgentId} onChange={(v) => {
-              setFormAgentId(v)
-              const ag = agents.find(a => a.agent_id === v)
-              if (ag && !host) setHost(ag.hostname || ag.name)
-            }}>
-              <option value="">{cl.deployAgentNone}</option>
-              {agents.map(a => (
-                <option key={a.agent_id} value={a.agent_id}>
-                  {a.name || a.hostname} ({a.os}{a.last_seen_at ? ` · ${new Date(a.last_seen_at) > new Date(Date.now() - (a.poll_interval || 3600) * 2000) ? cl.deployAgentOnline : cl.deployAgentOffline}` : ''})
-                </option>
-              ))}
-            </NativeSelect>
+            <SearchSelect
+              value={formAgentId}
+              onChange={(v) => {
+                setFormAgentId(v)
+                const ag = agents.find(a => a.agent_id === v)
+                if (ag && !host) setHost(ag.hostname || ag.name)
+              }}
+              options={agents.map(a => ({
+                value: a.agent_id,
+                label: `${a.name || a.hostname} (${a.os})`,
+                description: `${a.hostname} · ${a.last_seen_at && new Date(a.last_seen_at) > new Date(Date.now() - (a.poll_interval || 3600) * 2000) ? cl.deployAgentOnline : cl.deployAgentOffline}`,
+              }))}
+              placeholder={cl.deployAgentSelect}
+              emptyLabel={cl.deployAgentNone}
+            />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">

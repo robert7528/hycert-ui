@@ -7,6 +7,7 @@ import {
   ConfirmModal, toast,
 } from '@hysp/ui-kit'
 import { NativeSelect } from '@/components/ui/native-select'
+import { SearchSelect, type SearchSelectOption } from '@/components/ui/search-select'
 import {
   Search, Pencil, Trash2, Plus, Loader2, Server,
   ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
@@ -330,13 +331,14 @@ export function DeployList() {
             onChange={e => setSearchInput(e.target.value)}
           />
         </div>
-        <div className="w-[220px]">
-          <NativeSelect value={certFilter} onChange={v => { setCertFilter(v); setPage(1) }}>
-            <option value="all">{cl.deployAllCerts}</option>
-            {certs.map(c => (
-              <option key={c.id} value={String(c.id)}>{c.name || c.common_name}</option>
-            ))}
-          </NativeSelect>
+        <div className="w-[260px]">
+          <SearchSelect
+            value={certFilter === 'all' ? '' : certFilter}
+            onChange={v => { setCertFilter(v || 'all'); setPage(1) }}
+            options={certs.map(c => ({ value: String(c.id), label: c.name || c.common_name }))}
+            placeholder={cl.deploySearchPlaceholder}
+            emptyLabel={cl.deployAllCerts}
+          />
         </div>
         {total > 0 && (
           <span className="text-sm text-muted-foreground ml-auto">
@@ -355,28 +357,32 @@ export function DeployList() {
             {!editTarget && (
               <div className="space-y-1">
                 <Label className="text-xs">{cl.deployCert}</Label>
-                <NativeSelect value={formCertId} onChange={setFormCertId}>
-                  <option value="">—</option>
-                  {certs.map(c => (
-                    <option key={c.id} value={String(c.id)}>{c.name || c.common_name}</option>
-                  ))}
-                </NativeSelect>
+                <SearchSelect
+                  value={formCertId}
+                  onChange={setFormCertId}
+                  options={certs.map(c => ({ value: String(c.id), label: c.name || c.common_name, description: c.common_name }))}
+                  placeholder={cl.deployCert}
+                  emptyLabel="—"
+                />
               </div>
             )}
             <div className="space-y-1">
               <Label className="text-xs">{cl.deployAgent}</Label>
-              <NativeSelect value={formAgentId} onChange={(v) => {
-                setFormAgentId(v)
-                const ag = agents.find(a => a.agent_id === v)
-                if (ag && !host) setHost(ag.hostname || ag.name)
-              }}>
-                <option value="">{cl.deployAgentNone}</option>
-                {agents.map(a => (
-                  <option key={a.agent_id} value={a.agent_id}>
-                    {a.name || a.hostname} ({a.os}{a.last_seen_at ? ` · ${new Date(a.last_seen_at) > new Date(Date.now() - (a.poll_interval || 3600) * 2000) ? cl.deployAgentOnline : cl.deployAgentOffline}` : ''})
-                  </option>
-                ))}
-              </NativeSelect>
+              <SearchSelect
+                value={formAgentId}
+                onChange={(v) => {
+                  setFormAgentId(v)
+                  const ag = agents.find(a => a.agent_id === v)
+                  if (ag && !host) setHost(ag.hostname || ag.name)
+                }}
+                options={agents.map(a => ({
+                  value: a.agent_id,
+                  label: `${a.name || a.hostname} (${a.os})`,
+                  description: `${a.hostname} · ${a.last_seen_at && new Date(a.last_seen_at) > new Date(Date.now() - (a.poll_interval || 3600) * 2000) ? cl.deployAgentOnline : cl.deployAgentOffline}`,
+                }))}
+                placeholder={cl.deployAgentSelect}
+                emptyLabel={cl.deployAgentNone}
+              />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
