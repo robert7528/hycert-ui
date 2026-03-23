@@ -12,6 +12,7 @@ import {
   Loader2, ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import { csrCrudApi, type CSRDTO, type CSRListParams } from '@/lib/cert-api'
+import { DEFAULT_PAGE_SIZE } from '@/lib/constants'
 import { CSRGenerateDialog } from './csr-generate-dialog'
 import { CSRDetailDialog } from './csr-detail-dialog'
 
@@ -45,7 +46,7 @@ export function CSRList() {
   const [detailCSR, setDetailCSR] = useState<CSRDTO | null>(null)
   const [deleteCSR, setDeleteCSR] = useState<CSRDTO | null>(null)
 
-  const pageSize = 15
+  const pageSize = DEFAULT_PAGE_SIZE
 
   const fetchList = useCallback(async () => {
     setLoading(true)

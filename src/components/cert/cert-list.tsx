@@ -12,6 +12,7 @@ import {
   Loader2, ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import { certCrudApi, type CertificateDTO, type CertListParams } from '@/lib/cert-api'
+import { DEFAULT_PAGE_SIZE } from '@/lib/constants'
 import { CertImportDialog } from './cert-import-dialog'
 import { CertDetailDialog } from './cert-detail-dialog'
 import { CertEditDialog } from './cert-edit-dialog'
@@ -52,7 +53,7 @@ export function CertList() {
   const [editCert, setEditCert] = useState<CertificateDTO | null>(null)
   const [deleteCert, setDeleteCert] = useState<CertificateDTO | null>(null)
 
-  const pageSize = 15
+  const pageSize = DEFAULT_PAGE_SIZE
 
   const fetchList = useCallback(async () => {
     setLoading(true)

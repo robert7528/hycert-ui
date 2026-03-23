@@ -19,6 +19,7 @@ import {
   type CreateDeploymentRequest, type UpdateDeploymentRequest,
   type DeploymentHistoryItem, type AgentRegistrationDTO,
 } from '@/lib/cert-api'
+import { DEFAULT_PAGE_SIZE } from '@/lib/constants'
 
 function formatDate(iso: string | null) {
   if (!iso) return '—'
@@ -173,7 +174,7 @@ export function DeployList() {
   const [detailReloadCmd, setDetailReloadCmd] = useState('')
 
   const certNameMap = new Map(certs.map(c => [c.id, c.name || c.common_name]))
-  const pageSize = 20
+  const pageSize = DEFAULT_PAGE_SIZE
 
   // Load certs and agents for dropdowns
   useEffect(() => {

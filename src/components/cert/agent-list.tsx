@@ -12,6 +12,7 @@ import {
   CheckCircle2, XCircle, Monitor,
 } from 'lucide-react'
 import { agentRegistrationApi, type AgentRegistrationDTO } from '@/lib/cert-api'
+import { DEFAULT_PAGE_SIZE } from '@/lib/constants'
 
 function formatDateTime(iso: string | null) {
   if (!iso) return '—'
@@ -55,7 +56,7 @@ export function AgentList() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
 
-  const pageSize = 15
+  const pageSize = DEFAULT_PAGE_SIZE
 
   // Search debounce
   useEffect(() => {
