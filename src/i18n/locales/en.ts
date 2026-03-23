@@ -226,6 +226,7 @@ const en = {
       deployAllCerts: 'All Certificates',
       deploySearchPlaceholder: 'Search host or service...',
       // Agent deploy status
+      deployFilterAll: 'All',
       deployAgentStatus: 'Deploy Status',
       deployAgentPending: 'Pending',
       deployAgentDeployed: 'Deployed',
@@ -251,6 +252,7 @@ const en = {
       deployAgentOnline: 'Online',
       deployAgentOffline: 'Offline',
       // CSR
+      csrSearchPlaceholder: 'Search CN or SAN...',
       csrTitle: 'CSR Management',
       csrGenerate: 'Generate CSR',
       csrEmpty: 'No CSR records yet',

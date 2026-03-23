@@ -150,6 +150,7 @@ export function DeployList() {
   const [agents, setAgents] = useState<AgentRegistrationDTO[]>([])
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
+  const [deployStatusFilter, setDeployStatusFilter] = useState('')
 
   // Edit/Create
   const [formOpen, setFormOpen] = useState(false)
@@ -197,6 +198,7 @@ export function DeployList() {
     try {
       const params: DeploymentListParams = { page, page_size: pageSize }
       if (search) params.search = search
+      if (deployStatusFilter) params.deploy_status = deployStatusFilter
       const resp = await deployCrudApi.list(params)
       const data = resp.data!
       setDeployments(data.items ?? [])
@@ -207,7 +209,7 @@ export function DeployList() {
     } finally {
       setLoading(false)
     }
-  }, [page, search])
+  }, [page, search, deployStatusFilter])
 
   useEffect(() => { fetchList() }, [fetchList])
 
@@ -329,6 +331,18 @@ export function DeployList() {
             value={searchInput}
             onChange={e => setSearchInput(e.target.value)}
           />
+        </div>
+        <div className="flex gap-1">
+          {(['', 'deployed', 'pending', 'failed'] as const).map(s => (
+            <Button
+              key={s || 'all'}
+              variant={deployStatusFilter === s ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => { setDeployStatusFilter(s); setPage(1) }}
+            >
+              {s === '' ? cl.deployFilterAll : s === 'deployed' ? cl.deployAgentDeployed : s === 'pending' ? cl.deployAgentPending : cl.deployAgentFailed}
+            </Button>
+          ))}
         </div>
         {total > 0 && (
           <span className="text-sm text-muted-foreground ml-auto">

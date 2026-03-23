@@ -226,6 +226,7 @@ const zhTW = {
       deployAllCerts: '所有憑證',
       deploySearchPlaceholder: '搜尋主機或服務...',
       // Agent deploy status
+      deployFilterAll: '全部',
       deployAgentStatus: '部署狀態',
       deployAgentPending: '待部署',
       deployAgentDeployed: '已部署',
@@ -251,6 +252,7 @@ const zhTW = {
       deployAgentOnline: '在線',
       deployAgentOffline: '離線',
       // CSR
+      csrSearchPlaceholder: '搜尋 CN 或 SAN...',
       csrTitle: 'CSR 管理',
       csrGenerate: '產生 CSR',
       csrEmpty: '尚無 CSR 紀錄',

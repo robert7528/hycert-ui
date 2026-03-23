@@ -3,12 +3,12 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useLocale } from '@/contexts/locale-context'
 import {
-  Badge, Button, Card, CardContent,
+  Badge, Button, Card, CardContent, Input,
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
   ConfirmModal, toast,
 } from '@hysp/ui-kit'
 import {
-  Plus, Eye, Download, Trash2,
+  Plus, Eye, Download, Trash2, Search,
   Loader2, ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import { csrCrudApi, type CSRDTO, type CSRListParams } from '@/lib/cert-api'
@@ -40,6 +40,8 @@ export function CSRList() {
   const [totalPages, setTotalPages] = useState(0)
   const [page, setPage] = useState(1)
   const [status, setStatus] = useState('')
+  const [searchInput, setSearchInput] = useState('')
+  const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(false)
 
   const [generateOpen, setGenerateOpen] = useState(false)
@@ -48,11 +50,18 @@ export function CSRList() {
 
   const pageSize = DEFAULT_PAGE_SIZE
 
+  // Search debounce
+  useEffect(() => {
+    const timer = setTimeout(() => { setSearch(searchInput); setPage(1) }, 400)
+    return () => clearTimeout(timer)
+  }, [searchInput])
+
   const fetchList = useCallback(async () => {
     setLoading(true)
     try {
       const params: CSRListParams = { page, page_size: pageSize }
       if (status) params.status = status
+      if (search) params.search = search
       const resp = await csrCrudApi.list(params)
       const data = resp.data!
       setCSRs(data.items ?? [])
@@ -63,7 +72,7 @@ export function CSRList() {
     } finally {
       setLoading(false)
     }
-  }, [page, status])
+  }, [page, status, search])
 
   useEffect(() => { fetchList() }, [fetchList])
 
@@ -114,6 +123,15 @@ export function CSRList() {
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            className="pl-8"
+            placeholder={cl.csrSearchPlaceholder}
+            value={searchInput}
+            onChange={e => setSearchInput(e.target.value)}
+          />
+        </div>
         <div className="flex gap-1">
           {STATUS_OPTIONS.map(s => (
             <Button

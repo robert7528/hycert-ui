@@ -336,6 +336,7 @@ export interface CSRListParams {
   page?: number
   page_size?: number
   status?: string
+  search?: string
 }
 
 export interface CreateCSRRequest {
@@ -370,6 +371,7 @@ export const csrCrudApi = {
     if (params.page) qs.set('page', String(params.page))
     if (params.page_size) qs.set('page_size', String(params.page_size))
     if (params.status) qs.set('status', params.status)
+    if (params.search) qs.set('search', params.search)
     const q = qs.toString()
     return crudFetch<CSRListResponse>(`/api/v1/adm/cert/csrs${q ? `?${q}` : ''}`)
   },
@@ -446,6 +448,7 @@ export interface DeploymentListParams {
   certificate_id?: number
   search?: string
   status?: string
+  deploy_status?: string
 }
 
 export interface CreateDeploymentRequest {
@@ -518,6 +521,7 @@ export const deployCrudApi = {
     if (params.certificate_id) qs.set('certificate_id', String(params.certificate_id))
     if (params.search) qs.set('search', params.search)
     if (params.status) qs.set('status', params.status)
+    if (params.deploy_status) qs.set('deploy_status', params.deploy_status)
     const q = qs.toString()
     return crudFetch<DeploymentListResponse>(`/api/v1/adm/cert/deployments${q ? `?${q}` : ''}`)
   },
