@@ -7,7 +7,7 @@ import {
   ConfirmModal, toast,
 } from '@hysp/ui-kit'
 import { NativeSelect } from '@/components/ui/native-select'
-import { SearchSelect, type SearchSelectOption } from '@/components/ui/search-select'
+import { SearchSelect } from '@/components/ui/search-select'
 import {
   Search, Pencil, Trash2, Plus, Loader2, Server,
   ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
@@ -147,7 +147,6 @@ export function DeployList() {
   // Filters
   const [certs, setCerts] = useState<CertificateDTO[]>([])
   const [agents, setAgents] = useState<AgentRegistrationDTO[]>([])
-  const [certFilter, setCertFilter] = useState<string>('all')
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
 
@@ -196,7 +195,6 @@ export function DeployList() {
     setLoading(true)
     try {
       const params: DeploymentListParams = { page, page_size: pageSize }
-      if (certFilter && certFilter !== 'all') params.certificate_id = parseInt(certFilter)
       if (search) params.search = search
       const resp = await deployCrudApi.list(params)
       const data = resp.data!
@@ -208,7 +206,7 @@ export function DeployList() {
     } finally {
       setLoading(false)
     }
-  }, [page, certFilter, search])
+  }, [page, search])
 
   useEffect(() => { fetchList() }, [fetchList])
 
@@ -329,15 +327,6 @@ export function DeployList() {
             placeholder={cl.deploySearchPlaceholder}
             value={searchInput}
             onChange={e => setSearchInput(e.target.value)}
-          />
-        </div>
-        <div className="w-[260px]">
-          <SearchSelect
-            value={certFilter === 'all' ? '' : certFilter}
-            onChange={v => { setCertFilter(v || 'all'); setPage(1) }}
-            options={certs.map(c => ({ value: String(c.id), label: c.name || c.common_name }))}
-            placeholder={cl.deploySearchPlaceholder}
-            emptyLabel={cl.deployAllCerts}
           />
         </div>
         {total > 0 && (
