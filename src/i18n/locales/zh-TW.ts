@@ -244,6 +244,12 @@ const zhTW = {
       deployHistoryTime: '時間',
       deployHistorySuccess: '成功',
       deployHistoryFailed: '失敗',
+      // Agent registration
+      deployAgent: 'Agent',
+      deployAgentSelect: '選擇 Agent',
+      deployAgentNone: '無 Agent（手動）',
+      deployAgentOnline: '在線',
+      deployAgentOffline: '離線',
       // CSR
       csrTitle: 'CSR 管理',
       csrGenerate: '產生 CSR',

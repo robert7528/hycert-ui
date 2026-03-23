@@ -244,6 +244,12 @@ const en = {
       deployHistoryTime: 'Time',
       deployHistorySuccess: 'Success',
       deployHistoryFailed: 'Failed',
+      // Agent registration
+      deployAgent: 'Agent',
+      deployAgentSelect: 'Select Agent',
+      deployAgentNone: 'No agent (manual)',
+      deployAgentOnline: 'Online',
+      deployAgentOffline: 'Offline',
       // CSR
       csrTitle: 'CSR Management',
       csrGenerate: 'Generate CSR',

@@ -400,6 +400,7 @@ export interface DeploymentDTO {
   last_fingerprint: string
   last_deployed_at: string | null
   agent_token_id: number | null
+  agent_id: string | null
   deployed_at: string | null
   deployed_by: string
   notes: string
@@ -454,6 +455,7 @@ export interface CreateDeploymentRequest {
   target_detail?: string
   port?: number
   notes?: string
+  agent_id?: string
 }
 
 export interface UpdateDeploymentRequest {
@@ -463,6 +465,42 @@ export interface UpdateDeploymentRequest {
   port?: number
   status?: string
   notes?: string
+  agent_id?: string
+}
+
+// ── Agent Registration Types ────────────────────────────────────────────────
+
+export interface AgentRegistrationDTO {
+  id: number
+  agent_id: string
+  agent_token_id: number
+  name: string
+  hostname: string
+  ip_addresses: string  // JSON array
+  os: string
+  version: string
+  status: string
+  last_seen_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface AgentRegistrationListResponse {
+  items: AgentRegistrationDTO[]
+  total: number
+  page: number
+  page_size: number
+  total_pages: number
+}
+
+export const agentRegistrationApi = {
+  list: (params?: { page?: number; page_size?: number }) => {
+    const qs = new URLSearchParams()
+    if (params?.page) qs.set('page', String(params.page))
+    if (params?.page_size) qs.set('page_size', String(params.page_size))
+    const q = qs.toString()
+    return crudFetch<AgentRegistrationListResponse>(`/api/v1/adm/cert/agent-registrations${q ? `?${q}` : ''}`)
+  },
 }
 
 export const deployCrudApi = {

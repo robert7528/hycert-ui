@@ -13,11 +13,12 @@ import {
   CheckCircle2, XCircle, Clock, RotateCw,
 } from 'lucide-react'
 import {
-  deployCrudApi,
+  deployCrudApi, agentRegistrationApi,
   type DeploymentDTO,
   type CreateDeploymentRequest,
   type UpdateDeploymentRequest,
   type DeploymentHistoryItem,
+  type AgentRegistrationDTO,
 } from '@/lib/cert-api'
 
 interface Props {
@@ -140,8 +141,10 @@ export function CertDeploySection({ certificateId, certificateName }: Props) {
   const [deleteTarget, setDeleteTarget] = useState<DeploymentDTO | null>(null)
   const [saving, setSaving] = useState(false)
   const [expandedId, setExpandedId] = useState<number | null>(null)
+  const [agents, setAgents] = useState<AgentRegistrationDTO[]>([])
 
   // Form fields
+  const [formAgentId, setFormAgentId] = useState('')
   const [host, setHost] = useState('')
   const [service, setService] = useState('nginx')
   const [port, setPort] = useState('')
@@ -167,7 +170,14 @@ export function CertDeploySection({ certificateId, certificateName }: Props) {
 
   useEffect(() => { fetchList() }, [fetchList])
 
+  useEffect(() => {
+    agentRegistrationApi.list({ page_size: 100 }).then(resp => {
+      setAgents(resp.data?.items ?? [])
+    }).catch(() => {})
+  }, [])
+
   const resetForm = () => {
+    setFormAgentId('')
     setHost('')
     setService('nginx')
     setPort('')
@@ -188,6 +198,7 @@ export function CertDeploySection({ certificateId, certificateName }: Props) {
 
   const openEdit = (d: DeploymentDTO) => {
     setEditTarget(d)
+    setFormAgentId(d.agent_id || '')
     setHost(d.target_host)
     setService(d.target_service)
     setPort(d.port ? String(d.port) : '')
@@ -223,6 +234,7 @@ export function CertDeploySection({ certificateId, certificateName }: Props) {
           port: port ? parseInt(port) : undefined,
           notes: notes || undefined,
           status,
+          agent_id: formAgentId || undefined,
         }
         await deployCrudApi.update(editTarget.id, req)
       } else {
@@ -233,6 +245,7 @@ export function CertDeploySection({ certificateId, certificateName }: Props) {
           target_detail: detail || undefined,
           port: port ? parseInt(port) : undefined,
           notes: notes || undefined,
+          agent_id: formAgentId || undefined,
         }
         await deployCrudApi.create(req)
       }
@@ -291,6 +304,21 @@ export function CertDeploySection({ certificateId, certificateName }: Props) {
           <h4 className="text-sm font-medium">
             {editTarget ? cl.deployEditTitle : cl.deployCreateTitle}
           </h4>
+          <div className="space-y-1">
+            <Label className="text-xs">{cl.deployAgent}</Label>
+            <NativeSelect value={formAgentId} onChange={(v) => {
+              setFormAgentId(v)
+              const ag = agents.find(a => a.agent_id === v)
+              if (ag && !host) setHost(ag.hostname || ag.name)
+            }}>
+              <option value="">{cl.deployAgentNone}</option>
+              {agents.map(a => (
+                <option key={a.agent_id} value={a.agent_id}>
+                  {a.name || a.hostname} ({a.os}{a.last_seen_at ? ` · ${new Date(a.last_seen_at) > new Date(Date.now() - 600000) ? cl.deployAgentOnline : cl.deployAgentOffline}` : ''})
+                </option>
+              ))}
+            </NativeSelect>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-xs">{cl.deployHost}</Label>
