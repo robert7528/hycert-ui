@@ -132,7 +132,7 @@ function HistoryPanel({ deploymentId, cl }: { deploymentId: number; cl: any }) {
   )
 }
 
-const SERVICE_OPTIONS = ['nginx', 'apache', 'tomcat', 'k8s', 'haproxy', 'iis', 'other'] as const
+const SERVICE_OPTIONS = ['nginx', 'apache', 'haproxy', 'hyproxy', 'tomcat', 'k8s', 'iis', 'other'] as const
 const OS_OPTIONS = ['linux', 'windows'] as const
 
 export function DeployList() {
