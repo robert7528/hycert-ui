@@ -373,7 +373,7 @@ export function DeployList() {
                 <option value="">{cl.deployAgentNone}</option>
                 {agents.map(a => (
                   <option key={a.agent_id} value={a.agent_id}>
-                    {a.name || a.hostname} ({a.os}{a.last_seen_at ? ` · ${new Date(a.last_seen_at) > new Date(Date.now() - 7200000) ? cl.deployAgentOnline : cl.deployAgentOffline}` : ''})
+                    {a.name || a.hostname} ({a.os}{a.last_seen_at ? ` · ${new Date(a.last_seen_at) > new Date(Date.now() - (a.poll_interval || 3600) * 2000) ? cl.deployAgentOnline : cl.deployAgentOffline}` : ''})
                   </option>
                 ))}
               </NativeSelect>
