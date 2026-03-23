@@ -17,7 +17,7 @@ After=network.target
 [Container]
 Image=ghcr.io/robert7528/hycert-ui:latest
 # 只對 localhost 開放，由外部 nginx 反向代理
-PublishPort=127.0.0.1:3002:80
+PublishPort=127.0.0.1:5002:80
 LogDriver=journald
 
 [Service]
