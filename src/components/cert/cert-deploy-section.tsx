@@ -369,7 +369,7 @@ export function CertDeploySection({ certificateId, certificateName }: Props) {
                 placeholder={detailOs === 'windows' ? 'C:\\nginx\\ssl\\cert.pem' : '/etc/nginx/ssl/cert.pem'}
               />
             </div>
-            {service !== 'tomcat' && service !== 'iis' && (
+            {service !== 'tomcat' && service !== 'iis' && service !== 'haproxy' && (
               <div className="space-y-1">
                 <Label className="text-xs">{cl.deployKeyPath}</Label>
                 <Input

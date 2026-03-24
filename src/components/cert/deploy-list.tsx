@@ -421,7 +421,7 @@ export function DeployList() {
                 <Label className="text-xs">{cl.deployCertPath}</Label>
                 <Input value={detailCertPath} onChange={e => setDetailCertPath(e.target.value)} placeholder={detailOs === 'windows' ? 'C:\\nginx\\ssl\\cert.pem' : '/etc/nginx/ssl/cert.pem'} />
               </div>
-              {service !== 'tomcat' && service !== 'iis' && (
+              {service !== 'tomcat' && service !== 'iis' && service !== 'haproxy' && (
                 <div className="space-y-1">
                   <Label className="text-xs">{cl.deployKeyPath}</Label>
                   <Input value={detailKeyPath} onChange={e => setDetailKeyPath(e.target.value)} placeholder={detailOs === 'windows' ? 'C:\\nginx\\ssl\\key.pem' : '/etc/nginx/ssl/key.pem'} />
