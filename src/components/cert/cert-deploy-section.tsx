@@ -369,14 +369,16 @@ export function CertDeploySection({ certificateId, certificateName }: Props) {
                 placeholder={detailOs === 'windows' ? 'C:\\nginx\\ssl\\cert.pem' : '/etc/nginx/ssl/cert.pem'}
               />
             </div>
-            <div className="space-y-1">
-              <Label className="text-xs">{cl.deployKeyPath}</Label>
-              <Input
-                value={detailKeyPath}
-                onChange={e => setDetailKeyPath(e.target.value)}
-                placeholder={detailOs === 'windows' ? 'C:\\nginx\\ssl\\key.pem' : '/etc/nginx/ssl/key.pem'}
-              />
-            </div>
+            {service !== 'tomcat' && service !== 'iis' && (
+              <div className="space-y-1">
+                <Label className="text-xs">{cl.deployKeyPath}</Label>
+                <Input
+                  value={detailKeyPath}
+                  onChange={e => setDetailKeyPath(e.target.value)}
+                  placeholder={detailOs === 'windows' ? 'C:\\nginx\\ssl\\key.pem' : '/etc/nginx/ssl/key.pem'}
+                />
+              </div>
+            )}
           </div>
           {(service === 'tomcat' || service === 'iis') && (
             <div className="grid grid-cols-2 gap-3">
