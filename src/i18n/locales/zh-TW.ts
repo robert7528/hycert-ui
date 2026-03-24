@@ -207,6 +207,8 @@ const zhTW = {
       deployCertPath: '憑證路徑',
       deployKeyPath: '私鑰路徑',
       deployReloadCmd: '重載指令',
+      deployKeystorePassword: 'Keystore 密碼',
+      deployKeystoreAlias: 'Key 別名',
       deployPort: '連接埠',
       deployNotes: '備註',
       deployStatus: '狀態',

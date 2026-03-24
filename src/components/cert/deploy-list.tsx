@@ -172,6 +172,8 @@ export function DeployList() {
   const [detailOs, setDetailOs] = useState('linux')
   const [detailCertPath, setDetailCertPath] = useState('')
   const [detailKeyPath, setDetailKeyPath] = useState('')
+  const [detailPassword, setDetailPassword] = useState('')
+  const [detailAlias, setDetailAlias] = useState('')
   const [detailReloadCmd, setDetailReloadCmd] = useState('')
 
   const certNameMap = new Map(certs.map(c => [c.id, c.name || c.common_name]))
@@ -224,6 +226,8 @@ export function DeployList() {
     setDetailOs('linux')
     setDetailCertPath('')
     setDetailKeyPath('')
+    setDetailPassword('')
+    setDetailAlias('')
     setDetailReloadCmd('')
     setEditTarget(null)
     setFormOpen(false)
@@ -247,6 +251,8 @@ export function DeployList() {
     setDetailOs(detail.os || 'linux')
     setDetailCertPath(detail.cert_path || '')
     setDetailKeyPath(detail.key_path || '')
+    setDetailPassword(detail.password || '')
+    setDetailAlias(detail.alias || '')
     setDetailReloadCmd(detail.reload_cmd || '')
     setFormOpen(true)
   }
@@ -256,6 +262,8 @@ export function DeployList() {
       os: detailOs,
       cert_path: detailCertPath || undefined,
       key_path: detailKeyPath || undefined,
+      password: detailPassword || undefined,
+      alias: detailAlias || undefined,
       reload_cmd: detailReloadCmd || undefined,
     })
   }
@@ -418,9 +426,23 @@ export function DeployList() {
                 <Input value={detailKeyPath} onChange={e => setDetailKeyPath(e.target.value)} placeholder={detailOs === 'windows' ? 'C:\\nginx\\ssl\\key.pem' : '/etc/nginx/ssl/key.pem'} />
               </div>
             </div>
+            {(service === 'tomcat' || service === 'iis') && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">{cl.deployKeystorePassword}</Label>
+                  <Input type="password" value={detailPassword} onChange={e => setDetailPassword(e.target.value)} placeholder="changeit" />
+                </div>
+                {service === 'tomcat' && (
+                  <div className="space-y-1">
+                    <Label className="text-xs">{cl.deployKeystoreAlias}</Label>
+                    <Input value={detailAlias} onChange={e => setDetailAlias(e.target.value)} placeholder="tomcat" />
+                  </div>
+                )}
+              </div>
+            )}
             <div className="space-y-1">
               <Label className="text-xs">{cl.deployReloadCmd}</Label>
-              <Input value={detailReloadCmd} onChange={e => setDetailReloadCmd(e.target.value)} placeholder={service === 'iis' ? 'iisreset /restart' : 'nginx -s reload'} />
+              <Input value={detailReloadCmd} onChange={e => setDetailReloadCmd(e.target.value)} placeholder={service === 'iis' ? 'iisreset /restart' : service === 'tomcat' ? 'Restart-Service Tomcat8' : 'nginx -s reload'} />
             </div>
             {editTarget && (
               <div className="space-y-1">

@@ -155,6 +155,8 @@ export function CertDeploySection({ certificateId, certificateName }: Props) {
   const [detailOs, setDetailOs] = useState('linux')
   const [detailCertPath, setDetailCertPath] = useState('')
   const [detailKeyPath, setDetailKeyPath] = useState('')
+  const [detailPassword, setDetailPassword] = useState('')
+  const [detailAlias, setDetailAlias] = useState('')
   const [detailReloadCmd, setDetailReloadCmd] = useState('')
 
   const fetchList = useCallback(async () => {
@@ -187,6 +189,8 @@ export function CertDeploySection({ certificateId, certificateName }: Props) {
     setDetailOs('linux')
     setDetailCertPath('')
     setDetailKeyPath('')
+    setDetailPassword('')
+    setDetailAlias('')
     setDetailReloadCmd('')
     setEditTarget(null)
     setFormOpen(false)
@@ -209,6 +213,8 @@ export function CertDeploySection({ certificateId, certificateName }: Props) {
     setDetailOs(detail.os || 'linux')
     setDetailCertPath(detail.cert_path || '')
     setDetailKeyPath(detail.key_path || '')
+    setDetailPassword(detail.password || '')
+    setDetailAlias(detail.alias || '')
     setDetailReloadCmd(detail.reload_cmd || '')
     setFormOpen(true)
   }
@@ -218,6 +224,8 @@ export function CertDeploySection({ certificateId, certificateName }: Props) {
       os: detailOs,
       cert_path: detailCertPath || undefined,
       key_path: detailKeyPath || undefined,
+      password: detailPassword || undefined,
+      alias: detailAlias || undefined,
       reload_cmd: detailReloadCmd || undefined,
     })
   }
@@ -370,6 +378,20 @@ export function CertDeploySection({ certificateId, certificateName }: Props) {
               />
             </div>
           </div>
+          {(service === 'tomcat' || service === 'iis') && (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">{cl.deployKeystorePassword}</Label>
+                <Input type="password" value={detailPassword} onChange={e => setDetailPassword(e.target.value)} placeholder="changeit" />
+              </div>
+              {service === 'tomcat' && (
+                <div className="space-y-1">
+                  <Label className="text-xs">{cl.deployKeystoreAlias}</Label>
+                  <Input value={detailAlias} onChange={e => setDetailAlias(e.target.value)} placeholder="tomcat" />
+                </div>
+              )}
+            </div>
+          )}
           <div className="space-y-1">
             <Label className="text-xs">{cl.deployReloadCmd}</Label>
             <Input

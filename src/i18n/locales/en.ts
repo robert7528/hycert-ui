@@ -207,6 +207,8 @@ const en = {
       deployCertPath: 'Certificate Path',
       deployKeyPath: 'Private Key Path',
       deployReloadCmd: 'Reload Command',
+      deployKeystorePassword: 'Keystore Password',
+      deployKeystoreAlias: 'Key Alias',
       deployPort: 'Port',
       deployNotes: 'Notes',
       deployStatus: 'Status',
