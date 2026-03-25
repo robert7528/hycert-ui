@@ -512,6 +512,64 @@ export const agentRegistrationApi = {
     }),
 }
 
+// ── Agent Token API ──────────────────────────────────────────────────────────
+
+export interface AgentTokenDTO {
+  id: number
+  name: string
+  token_prefix: string
+  tenant_code: string
+  allowed_hosts: string
+  last_used_at: string | null
+  expires_at: string | null
+  status: string
+  created_by: string
+  created_at: string
+}
+
+export interface CreateTokenRequest {
+  name: string
+  expires_at?: string
+}
+
+export interface CreateTokenResponse {
+  token: string
+  id: number
+  name: string
+  token_prefix: string
+  status: string
+}
+
+export interface AgentTokenListResponse {
+  items: AgentTokenDTO[]
+  total: number
+  page: number
+  page_size: number
+  total_pages: number
+}
+
+export const agentTokenApi = {
+  list: (params?: { page?: number; page_size?: number; status?: string }) => {
+    const qs = new URLSearchParams()
+    if (params?.page) qs.set('page', String(params.page))
+    if (params?.page_size) qs.set('page_size', String(params.page_size))
+    if (params?.status) qs.set('status', String(params.status))
+    const q = qs.toString()
+    return certFetch<AgentTokenListResponse>(`/api/v1/adm/cert/agent-tokens${q ? `?${q}` : ''}`)
+  },
+  get: (id: number) =>
+    certFetch<AgentTokenDTO>(`/api/v1/adm/cert/agent-tokens/${id}`),
+  create: (req: CreateTokenRequest) =>
+    certFetch<CreateTokenResponse>('/api/v1/adm/cert/agent-tokens', {
+      method: 'POST',
+      body: JSON.stringify(req),
+    }),
+  revoke: (id: number) =>
+    certFetch<{ message: string }>(`/api/v1/adm/cert/agent-tokens/${id}`, {
+      method: 'DELETE',
+    }),
+}
+
 export const deployCrudApi = {
   create: (req: CreateDeploymentRequest) =>
     crudFetch<DeploymentDTO>('/api/v1/adm/cert/deployments', {
