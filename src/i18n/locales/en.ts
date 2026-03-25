@@ -372,7 +372,7 @@ const en = {
       revokeTitle: 'Revoke Token',
       revokeConfirm: 'Revoke token "{name}"? All agents using this token will lose access.',
       revealTitle: 'Token Created',
-      revealWarning: 'Copy this token now. You will not be able to see it again.',
+      revealWarning: 'Please keep this token safe. You can reveal it again from Token Management.',
       copy: 'Copy',
       copied: 'Copied',
       close: 'Close',

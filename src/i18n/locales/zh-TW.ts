@@ -372,7 +372,7 @@ const zhTW = {
       revokeTitle: '停用 Token',
       revokeConfirm: '確定停用 Token「{name}」？此 Token 下的所有 Agent 將無法認證。',
       revealTitle: 'Token 已建立',
-      revealWarning: '請立即複製此 Token，關閉後將無法再次查看。',
+      revealWarning: '請妥善保管此 Token。日後可於 Token 管理頁面點選「顯示」重新查看。',
       copy: '複製',
       copied: '已複製',
       close: '關閉',
