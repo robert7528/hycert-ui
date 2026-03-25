@@ -403,6 +403,7 @@ export interface DeploymentDTO {
   last_deployed_at: string | null
   agent_token_id: number | null
   agent_id: string | null
+  label: string
   deployed_at: string | null
   deployed_by: string
   notes: string
@@ -459,6 +460,7 @@ export interface CreateDeploymentRequest {
   port?: number
   notes?: string
   agent_id?: string
+  label?: string
 }
 
 export interface UpdateDeploymentRequest {
@@ -469,6 +471,7 @@ export interface UpdateDeploymentRequest {
   status?: string
   notes?: string
   agent_id?: string
+  label?: string
 }
 
 // ── Agent Registration Types ────────────────────────────────────────────────
@@ -518,6 +521,7 @@ export interface AgentTokenDTO {
   id: number
   name: string
   token_prefix: string
+  label: string
   tenant_code: string
   allowed_hosts: string
   last_used_at: string | null
@@ -529,7 +533,13 @@ export interface AgentTokenDTO {
 
 export interface CreateTokenRequest {
   name: string
+  label?: string
   expires_at?: string
+}
+
+export interface UpdateTokenRequest {
+  name?: string
+  label?: string
 }
 
 export interface CreateTokenResponse {
@@ -564,10 +574,17 @@ export const agentTokenApi = {
       method: 'POST',
       body: JSON.stringify(req),
     }),
+  update: (id: number, req: UpdateTokenRequest) =>
+    certFetch<AgentTokenDTO>(`/api/v1/adm/cert/agent-tokens/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(req),
+    }),
   revoke: (id: number) =>
     certFetch<{ message: string }>(`/api/v1/adm/cert/agent-tokens/${id}`, {
       method: 'DELETE',
     }),
+  labels: () =>
+    certFetch<string[]>('/api/v1/adm/cert/agent-tokens/labels'),
 }
 
 export const deployCrudApi = {

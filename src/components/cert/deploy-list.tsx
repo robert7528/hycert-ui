@@ -14,7 +14,7 @@ import {
   CheckCircle2, XCircle, Clock, RotateCw,
 } from 'lucide-react'
 import {
-  deployCrudApi, certCrudApi, agentRegistrationApi,
+  deployCrudApi, certCrudApi, agentRegistrationApi, agentTokenApi,
   type DeploymentDTO, type CertificateDTO, type DeploymentListParams,
   type CreateDeploymentRequest, type UpdateDeploymentRequest,
   type DeploymentHistoryItem, type AgentRegistrationDTO,
@@ -164,6 +164,8 @@ export function DeployList() {
   // Form fields
   const [formCertId, setFormCertId] = useState('')
   const [formAgentId, setFormAgentId] = useState('')
+  const [formLabel, setFormLabel] = useState('')
+  const [labels, setLabels] = useState<string[]>([])
   const [host, setHost] = useState('')
   const [service, setService] = useState('nginx')
   const [port, setPort] = useState('')
@@ -186,6 +188,9 @@ export function DeployList() {
     }).catch(() => {})
     agentRegistrationApi.list({ page_size: 100 }).then(resp => {
       setAgents(resp.data?.items ?? [])
+    }).catch(() => {})
+    agentTokenApi.labels().then(resp => {
+      setLabels(resp.data ?? [])
     }).catch(() => {})
   }, [])
 
@@ -218,6 +223,7 @@ export function DeployList() {
   const resetForm = () => {
     setFormCertId('')
     setFormAgentId('')
+    setFormLabel('')
     setHost('')
     setService('nginx')
     setPort('')
@@ -242,6 +248,7 @@ export function DeployList() {
     setEditTarget(d)
     setFormCertId(String(d.certificate_id))
     setFormAgentId(d.agent_id || '')
+    setFormLabel(d.label || '')
     setHost(d.target_host)
     setService(d.target_service)
     setPort(d.port ? String(d.port) : '')
@@ -282,6 +289,7 @@ export function DeployList() {
           notes: notes || undefined,
           status,
           agent_id: formAgentId || undefined,
+          label: formLabel || undefined,
         }
         await deployCrudApi.update(editTarget.id, req)
       } else {
@@ -294,6 +302,7 @@ export function DeployList() {
           port: port ? parseInt(port) : undefined,
           notes: notes || undefined,
           agent_id: formAgentId || undefined,
+          label: formLabel || undefined,
         }
         await deployCrudApi.create(req)
       }
@@ -395,6 +404,15 @@ export function DeployList() {
                 placeholder={cl.deployAgentSelect}
                 emptyLabel={cl.deployAgentNone}
               />
+            </div>
+            <div>
+              <Label className="text-xs">{cl.deployLabel}</Label>
+              <NativeSelect value={formLabel} onChange={e => setFormLabel(e.target.value)}>
+                <option value="">{cl.deployLabelNone}</option>
+                {labels.map(l => (
+                  <option key={l} value={l}>{l}</option>
+                ))}
+              </NativeSelect>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">

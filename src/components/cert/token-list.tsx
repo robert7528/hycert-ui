@@ -8,11 +8,11 @@ import {
 } from '@hysp/ui-kit'
 import {
   Search, Loader2, ChevronLeft, ChevronRight,
-  Plus, Key, Copy, ShieldOff,
+  Plus, Key, Copy, ShieldOff, Pencil,
 } from 'lucide-react'
 import {
   agentTokenApi,
-  type AgentTokenDTO, type CreateTokenRequest,
+  type AgentTokenDTO, type CreateTokenRequest, type UpdateTokenRequest,
 } from '@/lib/cert-api'
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants'
 
@@ -42,8 +42,15 @@ export function TokenList() {
   // Create dialog
   const [showCreate, setShowCreate] = useState(false)
   const [createName, setCreateName] = useState('')
+  const [createLabel, setCreateLabel] = useState('')
   const [createExpiry, setCreateExpiry] = useState('')
   const [creating, setCreating] = useState(false)
+
+  // Edit dialog
+  const [editTarget, setEditTarget] = useState<AgentTokenDTO | null>(null)
+  const [editName, setEditName] = useState('')
+  const [editLabel, setEditLabel] = useState('')
+  const [editing, setEditing] = useState(false)
 
   // Token reveal dialog
   const [revealToken, setRevealToken] = useState('')
@@ -71,6 +78,7 @@ export function TokenList() {
         items = items.filter(tk =>
           tk.name.toLowerCase().includes(q) ||
           tk.token_prefix.toLowerCase().includes(q) ||
+          tk.label.toLowerCase().includes(q) ||
           tk.created_by.toLowerCase().includes(q)
         )
       }
@@ -92,11 +100,13 @@ export function TokenList() {
     setCreating(true)
     try {
       const req: CreateTokenRequest = { name: createName.trim() }
+      if (createLabel.trim()) req.label = createLabel.trim()
       if (createExpiry) req.expires_at = new Date(createExpiry).toISOString()
       const resp = await agentTokenApi.create(req)
       setRevealToken(resp.data?.token ?? '')
       setShowCreate(false)
       setCreateName('')
+      setCreateLabel('')
       setCreateExpiry('')
       fetchList()
     } catch (err: any) {
@@ -104,6 +114,29 @@ export function TokenList() {
     } finally {
       setCreating(false)
     }
+  }
+
+  const handleEdit = async () => {
+    if (!editTarget) return
+    setEditing(true)
+    try {
+      const req: UpdateTokenRequest = {}
+      if (editName.trim() !== editTarget.name) req.name = editName.trim()
+      if (editLabel !== editTarget.label) req.label = editLabel
+      await agentTokenApi.update(editTarget.id, req)
+      setEditTarget(null)
+      fetchList()
+    } catch (err: any) {
+      toast.error(err.message)
+    } finally {
+      setEditing(false)
+    }
+  }
+
+  const openEdit = (tk: AgentTokenDTO) => {
+    setEditTarget(tk)
+    setEditName(tk.name)
+    setEditLabel(tk.label)
   }
 
   const handleRevoke = async () => {
@@ -165,11 +198,11 @@ export function TokenList() {
                 <tr className="border-b">
                   <th className="text-left p-3 font-medium">{cl.columnName}</th>
                   <th className="text-left p-3 font-medium">{cl.columnPrefix}</th>
+                  <th className="text-left p-3 font-medium">{cl.columnLabel}</th>
                   <th className="text-left p-3 font-medium">{cl.columnStatus}</th>
                   <th className="text-left p-3 font-medium">{cl.columnLastUsed}</th>
                   <th className="text-left p-3 font-medium">{cl.columnExpiry}</th>
                   <th className="text-left p-3 font-medium">{cl.columnCreatedBy}</th>
-                  <th className="text-left p-3 font-medium">{cl.columnCreatedAt}</th>
                   <th className="text-left p-3 font-medium">{cl.columnActions}</th>
                 </tr>
               </thead>
@@ -184,6 +217,13 @@ export function TokenList() {
                     </td>
                     <td className="p-3 font-mono text-xs text-muted-foreground">{tk.token_prefix}...</td>
                     <td className="p-3">
+                      {tk.label ? (
+                        <Badge variant="outline" className="text-xs">{tk.label}</Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </td>
+                    <td className="p-3">
                       {tk.status === 'active' ? (
                         <Badge variant="default" className="text-xs bg-green-600">{cl.statusActive}</Badge>
                       ) : (
@@ -193,13 +233,19 @@ export function TokenList() {
                     <td className="p-3 text-xs text-muted-foreground">{formatDateTime(tk.last_used_at)}</td>
                     <td className="p-3 text-xs text-muted-foreground">{formatDate(tk.expires_at)}</td>
                     <td className="p-3 text-xs text-muted-foreground">{tk.created_by}</td>
-                    <td className="p-3 text-xs text-muted-foreground">{formatDateTime(tk.created_at)}</td>
                     <td className="p-3">
-                      {tk.status === 'active' && (
-                        <Button variant="outline" size="sm" className="text-destructive" onClick={() => setRevokeTarget(tk)}>
-                          <ShieldOff className="h-3 w-3 mr-1" />{cl.actionRevoke}
-                        </Button>
-                      )}
+                      <div className="flex gap-1">
+                        {tk.status === 'active' && (
+                          <>
+                            <Button variant="outline" size="sm" onClick={() => openEdit(tk)}>
+                              <Pencil className="h-3 w-3 mr-1" />{cl.actionEdit}
+                            </Button>
+                            <Button variant="outline" size="sm" className="text-destructive" onClick={() => setRevokeTarget(tk)}>
+                              <ShieldOff className="h-3 w-3 mr-1" />{cl.actionRevoke}
+                            </Button>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -239,6 +285,15 @@ export function TokenList() {
                 />
               </div>
               <div>
+                <Label>{cl.fieldLabel}</Label>
+                <Input
+                  value={createLabel}
+                  onChange={e => setCreateLabel(e.target.value)}
+                  placeholder={cl.fieldLabelPlaceholder}
+                />
+                <p className="text-xs text-muted-foreground mt-1">{cl.fieldLabelHint}</p>
+              </div>
+              <div>
                 <Label>{cl.fieldExpiry}</Label>
                 <Input
                   type="date"
@@ -253,6 +308,36 @@ export function TokenList() {
               <Button onClick={handleCreate} disabled={creating || !createName.trim()}>
                 {creating && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
                 {cl.createButton}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Token Dialog */}
+      {editTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setEditTarget(null)}>
+          <div className="bg-background rounded-lg border shadow-lg p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold mb-4">{cl.editTitle}</h3>
+            <div className="space-y-4">
+              <div>
+                <Label>{cl.fieldName}</Label>
+                <Input value={editName} onChange={e => setEditName(e.target.value)} />
+              </div>
+              <div>
+                <Label>{cl.fieldLabel}</Label>
+                <Input
+                  value={editLabel}
+                  onChange={e => setEditLabel(e.target.value)}
+                  placeholder={cl.fieldLabelPlaceholder}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-6">
+              <Button variant="outline" onClick={() => setEditTarget(null)}>{cl.cancel}</Button>
+              <Button onClick={handleEdit} disabled={editing || !editName.trim()}>
+                {editing && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+                {cl.save}
               </Button>
             </div>
           </div>
