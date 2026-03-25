@@ -407,7 +407,7 @@ export function DeployList() {
             </div>
             <div>
               <Label className="text-xs">{cl.deployLabel}</Label>
-              <NativeSelect value={formLabel} onChange={e => setFormLabel(e.target.value)}>
+              <NativeSelect value={formLabel} onChange={v => setFormLabel(v)}>
                 <option value="">{cl.deployLabelNone}</option>
                 {labels.map(l => (
                   <option key={l} value={l}>{l}</option>

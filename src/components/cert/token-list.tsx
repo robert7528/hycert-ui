@@ -151,9 +151,22 @@ export function TokenList() {
   }
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(revealToken)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    try {
+      // Fallback for iframe (wujie): create textarea + execCommand
+      const textarea = document.createElement('textarea')
+      textarea.value = revealToken
+      textarea.style.position = 'fixed'
+      textarea.style.opacity = '0'
+      document.body.appendChild(textarea)
+      textarea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textarea)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // Last resort: prompt user to copy manually
+      prompt('Copy this token:', revealToken)
+    }
   }
 
   return (
