@@ -324,6 +324,12 @@ const en = {
       columnLastSeen: 'Last Seen',
       totalItems: '{count} agents',
       pagination: '{page} / {total}',
+      columnActions: 'Actions',
+      actionDisable: 'Disable',
+      actionEnable: 'Enable',
+      statusDisabled: 'Disabled',
+      confirmDisable: 'Disable this agent? It will no longer be able to pull certificates.',
+      confirmEnable: 'Enable this agent?',
     },
   },
 }

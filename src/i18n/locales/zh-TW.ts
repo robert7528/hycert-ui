@@ -324,6 +324,12 @@ const zhTW = {
       columnLastSeen: '最後上線',
       totalItems: '共 {count} 台',
       pagination: '{page} / {total}',
+      columnActions: '操作',
+      actionDisable: '停用',
+      actionEnable: '啟用',
+      statusDisabled: '已停用',
+      confirmDisable: '確定停用此 Agent？停用後將無法拉取憑證。',
+      confirmEnable: '確定啟用此 Agent？',
     },
   },
 }

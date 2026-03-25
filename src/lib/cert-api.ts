@@ -505,6 +505,11 @@ export const agentRegistrationApi = {
     const q = qs.toString()
     return crudFetch<AgentRegistrationListResponse>(`/api/v1/adm/cert/agent-registrations${q ? `?${q}` : ''}`)
   },
+  updateStatus: (id: number, status: string) =>
+    crudFetch<{ message: string }>(`/api/v1/adm/cert/agent-registrations/${id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    }),
 }
 
 export const deployCrudApi = {

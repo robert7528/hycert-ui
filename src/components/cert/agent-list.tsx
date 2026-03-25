@@ -9,7 +9,7 @@ import {
 } from '@hysp/ui-kit'
 import {
   Search, Loader2, ChevronLeft, ChevronRight,
-  CheckCircle2, XCircle, Monitor,
+  CheckCircle2, XCircle, Monitor, Ban, Power,
 } from 'lucide-react'
 import { agentRegistrationApi, type AgentRegistrationDTO } from '@/lib/cert-api'
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants'
@@ -98,6 +98,18 @@ export function AgentList() {
 
   useEffect(() => { fetchList() }, [fetchList])
 
+  const handleToggleStatus = async (agent: AgentRegistrationDTO) => {
+    const newStatus = agent.status === 'disabled' ? 'active' : 'disabled'
+    const msg = newStatus === 'disabled' ? cl.confirmDisable : cl.confirmEnable
+    if (!confirm(msg)) return
+    try {
+      await agentRegistrationApi.updateStatus(agent.id, newStatus)
+      fetchList()
+    } catch (err: any) {
+      toast.error(err.message)
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -155,6 +167,7 @@ export function AgentList() {
                   <TableHead>{cl.columnVersion}</TableHead>
                   <TableHead>{cl.columnInterval}</TableHead>
                   <TableHead>{cl.columnLastSeen}</TableHead>
+                  <TableHead>{cl.columnActions}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -164,7 +177,11 @@ export function AgentList() {
                   return (
                     <TableRow key={a.id}>
                       <TableCell>
-                        {online ? (
+                        {a.status === 'disabled' ? (
+                          <Badge variant="destructive" className="text-xs">
+                            <Ban className="h-3 w-3 mr-1" />{cl.statusDisabled}
+                          </Badge>
+                        ) : online ? (
                           <Badge variant="default" className="text-xs bg-green-600">
                             <CheckCircle2 className="h-3 w-3 mr-1" />{cl.statusOnline}
                           </Badge>
@@ -190,6 +207,17 @@ export function AgentList() {
                       <TableCell className="text-xs font-mono text-muted-foreground">{a.version || '—'}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{formatInterval(a.poll_interval || 3600)}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{formatDateTime(a.last_seen_at)}</TableCell>
+                      <TableCell>
+                        {a.status === 'disabled' ? (
+                          <Button variant="outline" size="sm" onClick={() => handleToggleStatus(a)}>
+                            <Power className="h-3 w-3 mr-1" />{cl.actionEnable}
+                          </Button>
+                        ) : (
+                          <Button variant="outline" size="sm" className="text-destructive" onClick={() => handleToggleStatus(a)}>
+                            <Ban className="h-3 w-3 mr-1" />{cl.actionDisable}
+                          </Button>
+                        )}
+                      </TableCell>
                     </TableRow>
                   )
                 })}
