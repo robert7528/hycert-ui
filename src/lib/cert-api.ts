@@ -480,6 +480,7 @@ export interface AgentRegistrationDTO {
   id: number
   agent_id: string
   agent_token_id: number
+  token_name: string
   name: string
   hostname: string
   ip_addresses: string  // JSON array
@@ -529,6 +530,8 @@ export interface AgentTokenDTO {
   status: string
   created_by: string
   created_at: string
+  agent_count: number
+  can_reveal: boolean
 }
 
 export interface CreateTokenRequest {
@@ -580,9 +583,15 @@ export const agentTokenApi = {
       body: JSON.stringify(req),
     }),
   revoke: (id: number) =>
+    certFetch<{ message: string }>(`/api/v1/adm/cert/agent-tokens/${id}/revoke`, {
+      method: 'PUT',
+    }),
+  remove: (id: number) =>
     certFetch<{ message: string }>(`/api/v1/adm/cert/agent-tokens/${id}`, {
       method: 'DELETE',
     }),
+  reveal: (id: number) =>
+    certFetch<{ token: string }>(`/api/v1/adm/cert/agent-tokens/${id}/reveal`),
   labels: () =>
     certFetch<string[]>('/api/v1/adm/cert/agent-tokens/labels'),
 }

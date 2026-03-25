@@ -163,6 +163,7 @@ export function AgentList() {
                   <TableHead>{cl.columnName}</TableHead>
                   <TableHead>{cl.columnHostname}</TableHead>
                   <TableHead>{cl.columnIp}</TableHead>
+                  <TableHead>{cl.columnToken}</TableHead>
                   <TableHead>{cl.columnOs}</TableHead>
                   <TableHead>{cl.columnVersion}</TableHead>
                   <TableHead>{cl.columnInterval}</TableHead>
@@ -201,6 +202,7 @@ export function AgentList() {
                       <TableCell className="text-muted-foreground text-xs">
                         {ips.length > 0 ? ips.join(', ') : '—'}
                       </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{a.token_name || '—'}</TableCell>
                       <TableCell>
                         <Badge variant="outline" className="text-xs">{a.os || '—'}</Badge>
                       </TableCell>

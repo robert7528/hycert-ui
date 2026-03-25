@@ -8,11 +8,12 @@ import {
 } from '@hysp/ui-kit'
 import {
   Search, Loader2, ChevronLeft, ChevronRight,
-  Plus, Key, Copy, ShieldOff, Pencil,
+  Plus, Key, Copy, ShieldOff, Pencil, Trash2, Eye, Users,
 } from 'lucide-react'
 import {
-  agentTokenApi,
+  agentTokenApi, agentRegistrationApi,
   type AgentTokenDTO, type CreateTokenRequest, type UpdateTokenRequest,
+  type AgentRegistrationDTO,
 } from '@/lib/cert-api'
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants'
 
@@ -56,8 +57,14 @@ export function TokenList() {
   const [revealToken, setRevealToken] = useState('')
   const [copied, setCopied] = useState(false)
 
-  // Revoke confirm
+  // Revoke / Delete confirm
   const [revokeTarget, setRevokeTarget] = useState<AgentTokenDTO | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<AgentTokenDTO | null>(null)
+
+  // Agent expand
+  const [expandedTokenId, setExpandedTokenId] = useState<number | null>(null)
+  const [expandedAgents, setExpandedAgents] = useState<AgentRegistrationDTO[]>([])
+  const [loadingAgents, setLoadingAgents] = useState(false)
 
   const pageSize = DEFAULT_PAGE_SIZE
 
@@ -150,9 +157,28 @@ export function TokenList() {
     }
   }
 
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    try {
+      await agentTokenApi.remove(deleteTarget.id)
+      setDeleteTarget(null)
+      fetchList()
+    } catch (err: any) {
+      toast.error(err.message)
+    }
+  }
+
+  const handleReveal = async (tk: AgentTokenDTO) => {
+    try {
+      const resp = await agentTokenApi.reveal(tk.id)
+      setRevealToken(resp.data?.token ?? '')
+    } catch (err: any) {
+      toast.error(err.message)
+    }
+  }
+
   const handleCopy = () => {
     try {
-      // Fallback for iframe (wujie): create textarea + execCommand
       const textarea = document.createElement('textarea')
       textarea.value = revealToken
       textarea.style.position = 'fixed'
@@ -164,8 +190,25 @@ export function TokenList() {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {
-      // Last resort: prompt user to copy manually
       prompt('Copy this token:', revealToken)
+    }
+  }
+
+  const toggleAgents = async (tokenId: number) => {
+    if (expandedTokenId === tokenId) {
+      setExpandedTokenId(null)
+      return
+    }
+    setExpandedTokenId(tokenId)
+    setLoadingAgents(true)
+    try {
+      const resp = await agentRegistrationApi.list({ page_size: 100 })
+      const agents = (resp.data?.items ?? []).filter(a => a.agent_token_id === tokenId)
+      setExpandedAgents(agents)
+    } catch (err: any) {
+      toast.error(err.message)
+    } finally {
+      setLoadingAgents(false)
     }
   }
 
@@ -212,55 +255,100 @@ export function TokenList() {
                   <th className="text-left p-3 font-medium">{cl.columnName}</th>
                   <th className="text-left p-3 font-medium">{cl.columnPrefix}</th>
                   <th className="text-left p-3 font-medium">{cl.columnLabel}</th>
+                  <th className="text-left p-3 font-medium">{cl.columnAgents}</th>
                   <th className="text-left p-3 font-medium">{cl.columnStatus}</th>
                   <th className="text-left p-3 font-medium">{cl.columnLastUsed}</th>
                   <th className="text-left p-3 font-medium">{cl.columnExpiry}</th>
-                  <th className="text-left p-3 font-medium">{cl.columnCreatedBy}</th>
                   <th className="text-left p-3 font-medium">{cl.columnActions}</th>
                 </tr>
               </thead>
               <tbody>
                 {tokens.map(tk => (
-                  <tr key={tk.id} className="border-b last:border-0 hover:bg-muted/50">
-                    <td className="p-3 font-medium">
-                      <div className="flex items-center gap-2">
-                        <Key className="h-4 w-4 text-muted-foreground shrink-0" />
-                        {tk.name}
-                      </div>
-                    </td>
-                    <td className="p-3 font-mono text-xs text-muted-foreground">{tk.token_prefix}...</td>
-                    <td className="p-3">
-                      {tk.label ? (
-                        <Badge variant="outline" className="text-xs">{tk.label}</Badge>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
-                    </td>
-                    <td className="p-3">
-                      {tk.status === 'active' ? (
-                        <Badge variant="default" className="text-xs bg-green-600">{cl.statusActive}</Badge>
-                      ) : (
-                        <Badge variant="destructive" className="text-xs">{cl.statusRevoked}</Badge>
-                      )}
-                    </td>
-                    <td className="p-3 text-xs text-muted-foreground">{formatDateTime(tk.last_used_at)}</td>
-                    <td className="p-3 text-xs text-muted-foreground">{formatDate(tk.expires_at)}</td>
-                    <td className="p-3 text-xs text-muted-foreground">{tk.created_by}</td>
-                    <td className="p-3">
-                      <div className="flex gap-1">
-                        {tk.status === 'active' && (
-                          <>
-                            <Button variant="outline" size="sm" onClick={() => openEdit(tk)}>
-                              <Pencil className="h-3 w-3 mr-1" />{cl.actionEdit}
-                            </Button>
-                            <Button variant="outline" size="sm" className="text-destructive" onClick={() => setRevokeTarget(tk)}>
-                              <ShieldOff className="h-3 w-3 mr-1" />{cl.actionRevoke}
-                            </Button>
-                          </>
+                  <>
+                    <tr key={tk.id} className="border-b last:border-0 hover:bg-muted/50">
+                      <td className="p-3 font-medium">
+                        <div className="flex items-center gap-2">
+                          <Key className="h-4 w-4 text-muted-foreground shrink-0" />
+                          {tk.name}
+                        </div>
+                      </td>
+                      <td className="p-3 font-mono text-xs text-muted-foreground">{tk.token_prefix}...</td>
+                      <td className="p-3">
+                        {tk.label ? (
+                          <Badge variant="outline" className="text-xs">{tk.label}</Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
                         )}
-                      </div>
-                    </td>
-                  </tr>
+                      </td>
+                      <td className="p-3">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs"
+                          onClick={() => toggleAgents(tk.id)}
+                        >
+                          <Users className="h-3 w-3 mr-1" />
+                          {tk.agent_count}
+                        </Button>
+                      </td>
+                      <td className="p-3">
+                        {tk.status === 'active' ? (
+                          <Badge variant="default" className="text-xs bg-green-600">{cl.statusActive}</Badge>
+                        ) : (
+                          <Badge variant="destructive" className="text-xs">{cl.statusRevoked}</Badge>
+                        )}
+                      </td>
+                      <td className="p-3 text-xs text-muted-foreground">{formatDateTime(tk.last_used_at)}</td>
+                      <td className="p-3 text-xs text-muted-foreground">{formatDate(tk.expires_at)}</td>
+                      <td className="p-3">
+                        <div className="flex gap-1">
+                          {tk.can_reveal && (
+                            <Button variant="outline" size="sm" onClick={() => handleReveal(tk)} title={cl.actionReveal}>
+                              <Eye className="h-3 w-3" />
+                            </Button>
+                          )}
+                          {tk.status === 'active' && (
+                            <>
+                              <Button variant="outline" size="sm" onClick={() => openEdit(tk)} title={cl.actionEdit}>
+                                <Pencil className="h-3 w-3" />
+                              </Button>
+                              <Button variant="outline" size="sm" className="text-destructive" onClick={() => setRevokeTarget(tk)} title={cl.actionRevoke}>
+                                <ShieldOff className="h-3 w-3" />
+                              </Button>
+                            </>
+                          )}
+                          {tk.agent_count === 0 && (
+                            <Button variant="outline" size="sm" className="text-destructive" onClick={() => setDeleteTarget(tk)} title={cl.actionDelete}>
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                    {expandedTokenId === tk.id && (
+                      <tr key={`${tk.id}-agents`} className="bg-muted/30">
+                        <td colSpan={8} className="p-3">
+                          {loadingAgents ? (
+                            <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+                          ) : expandedAgents.length === 0 ? (
+                            <p className="text-xs text-muted-foreground text-center">{cl.noAgents}</p>
+                          ) : (
+                            <div className="space-y-1">
+                              {expandedAgents.map(a => (
+                                <div key={a.id} className="flex items-center gap-3 text-xs">
+                                  <span className="font-medium">{a.name || a.hostname}</span>
+                                  <span className="text-muted-foreground">{a.hostname}</span>
+                                  <Badge variant={a.status === 'active' ? 'outline' : 'destructive'} className="text-xs">
+                                    {a.status}
+                                  </Badge>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                  </>
                 ))}
               </tbody>
             </table>
@@ -291,28 +379,16 @@ export function TokenList() {
             <div className="space-y-4">
               <div>
                 <Label>{cl.fieldName}</Label>
-                <Input
-                  value={createName}
-                  onChange={e => setCreateName(e.target.value)}
-                  placeholder={cl.fieldNamePlaceholder}
-                />
+                <Input value={createName} onChange={e => setCreateName(e.target.value)} placeholder={cl.fieldNamePlaceholder} />
               </div>
               <div>
                 <Label>{cl.fieldLabel}</Label>
-                <Input
-                  value={createLabel}
-                  onChange={e => setCreateLabel(e.target.value)}
-                  placeholder={cl.fieldLabelPlaceholder}
-                />
+                <Input value={createLabel} onChange={e => setCreateLabel(e.target.value)} placeholder={cl.fieldLabelPlaceholder} />
                 <p className="text-xs text-muted-foreground mt-1">{cl.fieldLabelHint}</p>
               </div>
               <div>
                 <Label>{cl.fieldExpiry}</Label>
-                <Input
-                  type="date"
-                  value={createExpiry}
-                  onChange={e => setCreateExpiry(e.target.value)}
-                />
+                <Input type="date" value={createExpiry} onChange={e => setCreateExpiry(e.target.value)} />
                 <p className="text-xs text-muted-foreground mt-1">{cl.fieldExpiryHint}</p>
               </div>
             </div>
@@ -339,11 +415,7 @@ export function TokenList() {
               </div>
               <div>
                 <Label>{cl.fieldLabel}</Label>
-                <Input
-                  value={editLabel}
-                  onChange={e => setEditLabel(e.target.value)}
-                  placeholder={cl.fieldLabelPlaceholder}
-                />
+                <Input value={editLabel} onChange={e => setEditLabel(e.target.value)} placeholder={cl.fieldLabelPlaceholder} />
               </div>
             </div>
             <div className="flex justify-end gap-2 mt-6">
@@ -386,6 +458,17 @@ export function TokenList() {
         variant="destructive"
         onConfirm={handleRevoke}
         onCancel={() => setRevokeTarget(null)}
+      />
+
+      {/* Delete Confirm */}
+      <ConfirmModal
+        open={!!deleteTarget}
+        title={cl.deleteTitle}
+        description={cl.deleteConfirm.replace('{name}', deleteTarget?.name ?? '')}
+        confirmLabel={cl.actionDelete}
+        variant="destructive"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
       />
     </div>
   )
