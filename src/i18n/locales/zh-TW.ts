@@ -255,6 +255,12 @@ const zhTW = {
       deployAgentOffline: '離線',
       deployLabel: '標籤',
       deployLabelNone: '無標籤（全部 Agent 可見）',
+      warnNoAgent: '未指定 Agent',
+      warnAgentNotFound: 'Agent 不存在',
+      warnAgentDisabled: 'Agent 已停用',
+      warnAgentOffline: 'Agent 離線',
+      warnTokenRevoked: 'Token 已停用',
+      warnLabelMismatch: '標籤不匹配（部署: {deployLabel} ≠ Token: {tokenLabel}）',
       // CSR
       csrSearchPlaceholder: '搜尋 CN 或 SAN...',
       csrTitle: 'CSR 管理',

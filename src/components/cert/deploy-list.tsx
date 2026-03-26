@@ -11,13 +11,14 @@ import { SearchSelect } from '@/components/ui/search-select'
 import {
   Search, Pencil, Trash2, Plus, Loader2, Server,
   ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
-  CheckCircle2, XCircle, Clock, RotateCw,
+  CheckCircle2, XCircle, Clock, RotateCw, AlertTriangle,
 } from 'lucide-react'
 import {
   deployCrudApi, certCrudApi, agentRegistrationApi, agentTokenApi,
   type DeploymentDTO, type CertificateDTO, type DeploymentListParams,
   type CreateDeploymentRequest, type UpdateDeploymentRequest,
   type DeploymentHistoryItem, type AgentRegistrationDTO,
+  type AgentTokenDTO,
 } from '@/lib/cert-api'
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants'
 
@@ -148,6 +149,7 @@ export function DeployList() {
   // Filters
   const [certs, setCerts] = useState<CertificateDTO[]>([])
   const [agents, setAgents] = useState<AgentRegistrationDTO[]>([])
+  const [tokens, setTokens] = useState<AgentTokenDTO[]>([])
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [deployStatusFilter, setDeployStatusFilter] = useState('')
@@ -179,6 +181,48 @@ export function DeployList() {
   const [detailReloadCmd, setDetailReloadCmd] = useState('')
 
   const certNameMap = new Map(certs.map(c => [c.id, c.name || c.common_name]))
+  const tokenMap = new Map(tokens.map(tk => [tk.id, tk]))
+
+  // Check deployment warnings
+  const getWarnings = (d: DeploymentDTO): string[] => {
+    const warnings: string[] = []
+
+    // No agent assigned
+    if (!d.agent_id) {
+      warnings.push(cl.warnNoAgent)
+      return warnings
+    }
+
+    // Agent checks
+    const agent = agents.find(a => a.agent_id === d.agent_id)
+    if (!agent) {
+      warnings.push(cl.warnAgentNotFound)
+      return warnings
+    }
+
+    // Agent disabled
+    if (agent.status === 'disabled') {
+      warnings.push(cl.warnAgentDisabled)
+    }
+
+    // Agent offline
+    const threshold = (agent.poll_interval || 3600) * 2 * 1000
+    if (!agent.last_seen_at || new Date(agent.last_seen_at).getTime() < Date.now() - threshold) {
+      warnings.push(cl.warnAgentOffline)
+    }
+
+    // Token label mismatch
+    const token = tokenMap.get(agent.agent_token_id)
+    if (token) {
+      if (token.status === 'revoked') {
+        warnings.push(cl.warnTokenRevoked)
+      } else if (d.label && token.label && d.label !== token.label) {
+        warnings.push(cl.warnLabelMismatch.replace('{deployLabel}', d.label).replace('{tokenLabel}', token.label))
+      }
+    }
+
+    return warnings
+  }
   const pageSize = DEFAULT_PAGE_SIZE
 
   // Load certs and agents for dropdowns
@@ -191,6 +235,9 @@ export function DeployList() {
     }).catch(() => {})
     agentTokenApi.labels().then(resp => {
       setLabels(resp.data ?? [])
+    }).catch(() => {})
+    agentTokenApi.list({ page_size: 100 }).then(resp => {
+      setTokens(resp.data?.items ?? [])
     }).catch(() => {})
   }, [])
 
@@ -524,6 +571,15 @@ export function DeployList() {
                         )}
                       </div>
                       {d.notes && <div className="text-xs text-muted-foreground">{d.notes}</div>}
+                      {(() => {
+                        const warnings = getWarnings(d)
+                        return warnings.length > 0 ? (
+                          <div className="flex items-start gap-1 text-xs text-amber-600">
+                            <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
+                            <div>{warnings.join('；')}</div>
+                          </div>
+                        ) : null
+                      })()}
                     </div>
                     <div className="flex gap-1 shrink-0">
                       <Button

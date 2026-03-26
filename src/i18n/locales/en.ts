@@ -255,6 +255,12 @@ const en = {
       deployAgentOffline: 'Offline',
       deployLabel: 'Label',
       deployLabelNone: 'No label (visible to all agents)',
+      warnNoAgent: 'No agent assigned',
+      warnAgentNotFound: 'Agent not found',
+      warnAgentDisabled: 'Agent is disabled',
+      warnAgentOffline: 'Agent is offline',
+      warnTokenRevoked: 'Token is revoked',
+      warnLabelMismatch: 'Label mismatch (deploy: {deployLabel} ≠ token: {tokenLabel})',
       // CSR
       csrSearchPlaceholder: 'Search CN or SAN...',
       csrTitle: 'CSR Management',
