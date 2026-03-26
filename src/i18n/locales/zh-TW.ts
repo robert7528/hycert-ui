@@ -312,6 +312,8 @@ const zhTW = {
       loading: '載入中...',
       daysRemaining: '{days} 天後到期',
       daysExpired: '已過期 {days} 天',
+      warnExpiringSoon: '即將到期（30 天內）',
+      warnNoDeployment: '尚無部署目標',
     },
     agentList: {
       title: 'Agent 管理',
@@ -339,6 +341,8 @@ const zhTW = {
       statusDisabled: '已停用',
       confirmDisable: '確定停用此 Agent？停用後將無法拉取憑證。',
       confirmEnable: '確定啟用此 Agent？',
+      warnTokenRevoked: 'Token 已停用',
+      warnTokenExpired: 'Token 已過期',
     },
     tokenList: {
       title: 'Token 管理',

@@ -312,6 +312,8 @@ const en = {
       loading: 'Loading...',
       daysRemaining: 'Expires in {days} days',
       daysExpired: 'Expired {days} days ago',
+      warnExpiringSoon: 'Expiring soon (within 30 days)',
+      warnNoDeployment: 'No deployment targets',
     },
     agentList: {
       title: 'Agent Management',
@@ -339,6 +341,8 @@ const en = {
       statusDisabled: 'Disabled',
       confirmDisable: 'Disable this agent? It will no longer be able to pull certificates.',
       confirmEnable: 'Enable this agent?',
+      warnTokenRevoked: 'Token is revoked',
+      warnTokenExpired: 'Token is expired',
     },
     tokenList: {
       title: 'Token Management',

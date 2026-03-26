@@ -9,9 +9,9 @@ import {
 } from '@hysp/ui-kit'
 import {
   Search, Loader2, ChevronLeft, ChevronRight,
-  CheckCircle2, XCircle, Monitor, Ban, Power,
+  CheckCircle2, XCircle, Monitor, Ban, Power, AlertTriangle,
 } from 'lucide-react'
-import { agentRegistrationApi, type AgentRegistrationDTO } from '@/lib/cert-api'
+import { agentRegistrationApi, agentTokenApi, type AgentRegistrationDTO, type AgentTokenDTO } from '@/lib/cert-api'
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants'
 
 function formatDateTime(iso: string | null) {
@@ -48,6 +48,7 @@ export function AgentList() {
   const cl = t.hycert.agentList
 
   const [agents, setAgents] = useState<AgentRegistrationDTO[]>([])
+  const [tokens, setTokens] = useState<AgentTokenDTO[]>([])
   const [total, setTotal] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
   const [page, setPage] = useState(1)
@@ -97,6 +98,28 @@ export function AgentList() {
   }, [page, search, statusFilter])
 
   useEffect(() => { fetchList() }, [fetchList])
+
+  // Load tokens for warning checks
+  useEffect(() => {
+    agentTokenApi.list({ page_size: 100 }).then(resp => {
+      setTokens(resp.data?.items ?? [])
+    }).catch(() => {})
+  }, [])
+
+  const tokenMap = new Map(tokens.map(tk => [tk.id, tk]))
+
+  const getAgentWarnings = (a: AgentRegistrationDTO): string[] => {
+    const warnings: string[] = []
+    const token = tokenMap.get(a.agent_token_id)
+    if (!token) return warnings
+    if (token.status === 'revoked') {
+      warnings.push(cl.warnTokenRevoked)
+    }
+    if (token.expires_at && new Date(token.expires_at) < new Date()) {
+      warnings.push(cl.warnTokenExpired)
+    }
+    return warnings
+  }
 
   const handleToggleStatus = async (agent: AgentRegistrationDTO) => {
     const newStatus = agent.status === 'disabled' ? 'active' : 'disabled'
@@ -202,7 +225,19 @@ export function AgentList() {
                       <TableCell className="text-muted-foreground text-xs">
                         {ips.length > 0 ? ips.join(', ') : '—'}
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{a.token_name || '—'}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          {a.token_name || '—'}
+                          {(() => {
+                            const warnings = getAgentWarnings(a)
+                            return warnings.length > 0 ? (
+                              <span className="text-amber-600" title={warnings.join('；')}>
+                                <AlertTriangle className="h-3 w-3" />
+                              </span>
+                            ) : null
+                          })()}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="text-xs">{a.os || '—'}</Badge>
                       </TableCell>
