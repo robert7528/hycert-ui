@@ -53,12 +53,14 @@ function formatDetail(d: Record<string, string | undefined>): string {
 
 function DetailInfo({ raw, cl }: { raw: string; cl: any }) {
   const d = parseDetail(raw)
-  if (!d.os && !d.cert_path && !d.key_path && !d.reload_cmd) {
+  if (!d.os && !d.cert_path && !d.key_path && !d.reload_cmd && !d.secret_name) {
     return raw ? <div className="text-xs text-muted-foreground">{raw}</div> : null
   }
   return (
     <div className="text-xs text-muted-foreground space-y-0.5">
       {d.os && <span className="mr-2">{d.os === 'windows' ? 'Windows' : 'Linux'}</span>}
+      {d.secret_name && <div>{cl.deploySecretName}: {d.secret_name} ({d.namespace || 'default'})</div>}
+      {d.kubeconfig && <div>{cl.deployKubeconfig}: {d.kubeconfig}</div>}
       {d.cert_path && <div>{cl.deployCertPath}: {d.cert_path}</div>}
       {d.key_path && <div>{cl.deployKeyPath}: {d.key_path}</div>}
       {d.reload_cmd && <div>{cl.deployReloadCmd}: <code>{d.reload_cmd}</code></div>}
@@ -133,7 +135,7 @@ function HistoryPanel({ deploymentId, cl }: { deploymentId: number; cl: any }) {
   )
 }
 
-const SERVICE_OPTIONS = ['nginx', 'apache', 'haproxy', 'hyproxy', 'tomcat', 'k8s', 'iis', 'other'] as const
+const SERVICE_OPTIONS = ['nginx', 'apache', 'haproxy', 'hyproxy', 'tomcat', 'kubernetes', 'iis', 'other'] as const
 const OS_OPTIONS = ['linux', 'windows'] as const
 
 export function DeployList() {
@@ -179,6 +181,10 @@ export function DeployList() {
   const [detailPassword, setDetailPassword] = useState('')
   const [detailAlias, setDetailAlias] = useState('')
   const [detailReloadCmd, setDetailReloadCmd] = useState('')
+  // K8S fields
+  const [detailSecretName, setDetailSecretName] = useState('')
+  const [detailNamespace, setDetailNamespace] = useState('default')
+  const [detailKubeconfig, setDetailKubeconfig] = useState('')
 
   const certNameMap = new Map(certs.map(c => [c.id, c.name || c.common_name]))
   const tokenMap = new Map(tokens.map(tk => [tk.id, tk]))
@@ -282,6 +288,9 @@ export function DeployList() {
     setDetailPassword('')
     setDetailAlias('')
     setDetailReloadCmd('')
+    setDetailSecretName('')
+    setDetailNamespace('default')
+    setDetailKubeconfig('')
     setEditTarget(null)
     setFormOpen(false)
   }
@@ -308,10 +317,21 @@ export function DeployList() {
     setDetailPassword(detail.password || '')
     setDetailAlias(detail.alias || '')
     setDetailReloadCmd(detail.reload_cmd || '')
+    setDetailSecretName(detail.secret_name || '')
+    setDetailNamespace(detail.namespace || 'default')
+    setDetailKubeconfig(detail.kubeconfig || '')
     setFormOpen(true)
   }
 
   const buildDetail = (): string => {
+    if (service === 'kubernetes') {
+      return formatDetail({
+        secret_name: detailSecretName || undefined,
+        namespace: detailNamespace || undefined,
+        kubeconfig: detailKubeconfig || undefined,
+        reload_cmd: detailReloadCmd || undefined,
+      })
+    }
     return formatDetail({
       os: detailOs,
       cert_path: detailCertPath || undefined,
@@ -472,27 +492,47 @@ export function DeployList() {
                   {SERVICE_OPTIONS.map(s => (<option key={s} value={s}>{s}</option>))}
                 </NativeSelect>
               </div>
-              <div className="space-y-1">
-                <Label className="text-xs">{cl.deployPort}</Label>
-                <Input type="number" value={port} onChange={e => setPort(e.target.value)} placeholder="443" />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">{cl.deployOs}</Label>
-                <NativeSelect value={detailOs} onChange={setDetailOs}>
-                  {OS_OPTIONS.map(o => (<option key={o} value={o}>{o === 'windows' ? 'Windows' : 'Linux'}</option>))}
-                </NativeSelect>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">{cl.deployCertPath}</Label>
-                <Input value={detailCertPath} onChange={e => setDetailCertPath(e.target.value)} placeholder={detailOs === 'windows' ? 'C:\\nginx\\ssl\\cert.pem' : '/etc/nginx/ssl/cert.pem'} />
-              </div>
-              {service !== 'tomcat' && service !== 'iis' && service !== 'haproxy' && (
-                <div className="space-y-1">
-                  <Label className="text-xs">{cl.deployKeyPath}</Label>
-                  <Input value={detailKeyPath} onChange={e => setDetailKeyPath(e.target.value)} placeholder={detailOs === 'windows' ? 'C:\\nginx\\ssl\\key.pem' : '/etc/nginx/ssl/key.pem'} />
-                </div>
+              {service !== 'kubernetes' && (
+                <>
+                  <div className="space-y-1">
+                    <Label className="text-xs">{cl.deployPort}</Label>
+                    <Input type="number" value={port} onChange={e => setPort(e.target.value)} placeholder="443" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">{cl.deployOs}</Label>
+                    <NativeSelect value={detailOs} onChange={setDetailOs}>
+                      {OS_OPTIONS.map(o => (<option key={o} value={o}>{o === 'windows' ? 'Windows' : 'Linux'}</option>))}
+                    </NativeSelect>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">{cl.deployCertPath}</Label>
+                    <Input value={detailCertPath} onChange={e => setDetailCertPath(e.target.value)} placeholder={detailOs === 'windows' ? 'C:\\nginx\\ssl\\cert.pem' : '/etc/nginx/ssl/cert.pem'} />
+                  </div>
+                  {service !== 'tomcat' && service !== 'iis' && service !== 'haproxy' && (
+                    <div className="space-y-1">
+                      <Label className="text-xs">{cl.deployKeyPath}</Label>
+                      <Input value={detailKeyPath} onChange={e => setDetailKeyPath(e.target.value)} placeholder={detailOs === 'windows' ? 'C:\\nginx\\ssl\\key.pem' : '/etc/nginx/ssl/key.pem'} />
+                    </div>
+                  )}
+                </>
               )}
             </div>
+            {service === 'kubernetes' && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">{cl.deploySecretName}</Label>
+                  <Input value={detailSecretName} onChange={e => setDetailSecretName(e.target.value)} placeholder="my-tls-secret" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">{cl.deployNamespace}</Label>
+                  <Input value={detailNamespace} onChange={e => setDetailNamespace(e.target.value)} placeholder="default" />
+                </div>
+                <div className="space-y-1 col-span-2">
+                  <Label className="text-xs">{cl.deployKubeconfig}</Label>
+                  <Input value={detailKubeconfig} onChange={e => setDetailKubeconfig(e.target.value)} placeholder="/root/.kube/config" />
+                </div>
+              </div>
+            )}
             {(service === 'tomcat' || service === 'iis') && (
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
@@ -509,7 +549,7 @@ export function DeployList() {
             )}
             <div className="space-y-1">
               <Label className="text-xs">{cl.deployReloadCmd}</Label>
-              <Input value={detailReloadCmd} onChange={e => setDetailReloadCmd(e.target.value)} placeholder={service === 'iis' ? 'iisreset /restart' : service === 'tomcat' ? 'Restart-Service Tomcat8' : 'nginx -s reload'} />
+              <Input value={detailReloadCmd} onChange={e => setDetailReloadCmd(e.target.value)} placeholder={service === 'kubernetes' ? 'kubectl rollout restart deploy/my-app -n default' : service === 'iis' ? 'iisreset /restart' : service === 'tomcat' ? 'Restart-Service Tomcat8' : 'nginx -s reload'} />
             </div>
             {editTarget && (
               <div className="space-y-1">
