@@ -213,7 +213,7 @@ const zhTW = {
       deployNotes: '備註',
       deployStatus: '狀態',
       deployStatusActive: '使用中',
-      deployStatusRemoved: '已移除',
+      deployStatusDisabled: '停用中',
       deployDeployedAt: '部署時間',
       deployDeployedBy: '部署者',
       deployCert: '憑證',

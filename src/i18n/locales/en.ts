@@ -213,7 +213,7 @@ const en = {
       deployNotes: 'Notes',
       deployStatus: 'Status',
       deployStatusActive: 'Active',
-      deployStatusRemoved: 'Removed',
+      deployStatusDisabled: 'Disabled',
       deployDeployedAt: 'Deployed At',
       deployDeployedBy: 'Deployed By',
       deployCert: 'Certificate',

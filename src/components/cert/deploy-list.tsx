@@ -469,7 +469,7 @@ export function DeployList() {
                 <Label className="text-xs">{cl.deployStatus}</Label>
                 <NativeSelect value={status} onChange={setStatus} className="w-[180px]">
                   <option value="active">{cl.deployStatusActive}</option>
-                  <option value="removed">{cl.deployStatusRemoved}</option>
+                  <option value="disabled">{cl.deployStatusDisabled}</option>
                 </NativeSelect>
               </div>
             )}
@@ -509,7 +509,7 @@ export function DeployList() {
                         <Badge variant="outline" className="text-xs">{d.target_service}</Badge>
                         {d.port && <span className="text-xs text-muted-foreground">:{d.port}</span>}
                         <Badge variant={d.status === 'active' ? 'default' : 'secondary'} className="text-xs">
-                          {d.status === 'active' ? cl.deployStatusActive : cl.deployStatusRemoved}
+                          {d.status === 'active' ? cl.deployStatusActive : cl.deployStatusDisabled}
                         </Badge>
                         <DeployStatusBadge status={d.deploy_status} cl={cl} />
                       </div>
