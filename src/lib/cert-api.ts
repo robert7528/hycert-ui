@@ -677,3 +677,133 @@ export const certUtilityApi = {
       body: JSON.stringify(req),
     }),
 }
+
+// ── ACME Account Types ──────────────────────────────────────────────────────
+
+export interface AcmeAccountDTO {
+  id: number
+  name: string
+  email: string
+  directory_url: string
+  status: string
+  created_by: string
+  created_at: string
+  updated_at: string
+}
+
+export interface CreateAcmeAccountRequest {
+  name: string
+  email: string
+  directory_url: string
+}
+
+export interface UpdateAcmeAccountRequest {
+  name?: string
+  email?: string
+  status?: string
+}
+
+export interface AcmeAccountListResponse {
+  items: AcmeAccountDTO[]
+  total: number
+  page: number
+  page_size: number
+  total_pages: number
+}
+
+// ── ACME Order Types ────────────────────────────────────────────────────────
+
+export interface AcmeOrderDTO {
+  id: number
+  account_id: number
+  certificate_id: number | null
+  domains: string
+  challenge_type: string
+  dns_provider: string
+  key_type: string
+  status: string
+  error_message: string
+  order_url: string
+  renew_from_id: number | null
+  auto_renew: boolean
+  renew_before_days: number
+  last_renewed_at: string | null
+  requested_by: string
+  created_at: string
+  updated_at: string
+}
+
+export interface CreateAcmeOrderRequest {
+  account_id: number
+  domains: string[]
+  challenge_type: string
+  dns_provider?: string
+  dns_config?: Record<string, string>
+  key_type?: string
+}
+
+export interface AcmeOrderListResponse {
+  items: AcmeOrderDTO[]
+  total: number
+  page: number
+  page_size: number
+  total_pages: number
+}
+
+// ── ACME Account API ────────────────────────────────────────────────────────
+
+export const acmeAccountApi = {
+  list: (params?: { page?: number; page_size?: number; status?: string }) => {
+    const qs = new URLSearchParams()
+    if (params?.page) qs.set('page', String(params.page))
+    if (params?.page_size) qs.set('page_size', String(params.page_size))
+    if (params?.status) qs.set('status', params.status)
+    const q = qs.toString()
+    return crudFetch<AcmeAccountListResponse>(`/api/v1/adm/cert/acme/accounts${q ? `?${q}` : ''}`)
+  },
+  get: (id: number) =>
+    crudFetch<AcmeAccountDTO>(`/api/v1/adm/cert/acme/accounts/${id}`),
+  create: (req: CreateAcmeAccountRequest) =>
+    crudFetch<AcmeAccountDTO>('/api/v1/adm/cert/acme/accounts', {
+      method: 'POST',
+      body: JSON.stringify(req),
+    }),
+  update: (id: number, req: UpdateAcmeAccountRequest) =>
+    crudFetch<AcmeAccountDTO>(`/api/v1/adm/cert/acme/accounts/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(req),
+    }),
+  remove: (id: number) =>
+    crudFetch<{ message: string }>(`/api/v1/adm/cert/acme/accounts/${id}`, {
+      method: 'DELETE',
+    }),
+}
+
+// ── ACME Order API ──────────────────────────────────────────────────────────
+
+export const acmeOrderApi = {
+  list: (params?: { page?: number; page_size?: number; account_id?: number; status?: string }) => {
+    const qs = new URLSearchParams()
+    if (params?.page) qs.set('page', String(params.page))
+    if (params?.page_size) qs.set('page_size', String(params.page_size))
+    if (params?.account_id) qs.set('account_id', String(params.account_id))
+    if (params?.status) qs.set('status', params.status)
+    const q = qs.toString()
+    return crudFetch<AcmeOrderListResponse>(`/api/v1/adm/cert/acme/orders${q ? `?${q}` : ''}`)
+  },
+  get: (id: number) =>
+    crudFetch<AcmeOrderDTO>(`/api/v1/adm/cert/acme/orders/${id}`),
+  create: (req: CreateAcmeOrderRequest) =>
+    crudFetch<AcmeOrderDTO>('/api/v1/adm/cert/acme/orders', {
+      method: 'POST',
+      body: JSON.stringify(req),
+    }),
+  renew: (id: number) =>
+    crudFetch<AcmeOrderDTO>(`/api/v1/adm/cert/acme/orders/${id}/renew`, {
+      method: 'POST',
+    }),
+  cancel: (id: number) =>
+    crudFetch<{ message: string }>(`/api/v1/adm/cert/acme/orders/${id}`, {
+      method: 'DELETE',
+    }),
+}
