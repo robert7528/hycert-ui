@@ -464,6 +464,7 @@ export interface CreateDeploymentRequest {
 }
 
 export interface UpdateDeploymentRequest {
+  certificate_id?: number
   target_host?: string
   target_service?: string
   target_detail?: string

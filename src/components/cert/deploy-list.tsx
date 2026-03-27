@@ -349,6 +349,7 @@ export function DeployList() {
       const detail = buildDetail()
       if (editTarget) {
         const req: UpdateDeploymentRequest = {
+          certificate_id: formCertId ? parseInt(formCertId) : undefined,
           target_host: host,
           target_service: service,
           target_detail: detail || undefined,
@@ -442,18 +443,16 @@ export function DeployList() {
             <h4 className="text-sm font-medium">
               {editTarget ? cl.deployEditTitle : cl.deployCreateTitle}
             </h4>
-            {!editTarget && (
-              <div className="space-y-1">
-                <Label className="text-xs">{cl.deployCert}</Label>
-                <SearchSelect
-                  value={formCertId}
-                  onChange={setFormCertId}
-                  options={certs.map(c => ({ value: String(c.id), label: c.name || c.common_name, description: c.common_name }))}
-                  placeholder={cl.deployCert}
-                  emptyLabel="—"
-                />
-              </div>
-            )}
+            <div className="space-y-1">
+              <Label className="text-xs">{cl.deployCert}</Label>
+              <SearchSelect
+                value={formCertId}
+                onChange={setFormCertId}
+                options={certs.map(c => ({ value: String(c.id), label: c.name || c.common_name, description: c.common_name }))}
+                placeholder={cl.deployCert}
+                emptyLabel="—"
+              />
+            </div>
             <div className="space-y-1">
               <Label className="text-xs">{cl.deployAgent}</Label>
               <SearchSelect
