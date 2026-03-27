@@ -738,7 +738,7 @@ export interface CreateAcmeOrderRequest {
   domains: string[]
   challenge_type: string
   dns_provider?: string
-  dns_config?: Record<string, string>
+  dns_config?: Record<string, string>  // env var key-value pairs, e.g. {"DUCKDNS_TOKEN": "xxx"}
   key_type?: string
 }
 
@@ -777,6 +777,24 @@ export const acmeAccountApi = {
     crudFetch<{ message: string }>(`/api/v1/adm/cert/acme/accounts/${id}`, {
       method: 'DELETE',
     }),
+}
+
+// ── ACME DNS Provider Metadata ──────────────────────────────────────────────
+
+export interface DNSProviderField {
+  key: string
+  label: string
+  secret: boolean
+}
+
+export interface DNSProviderDef {
+  name: string
+  label: string
+  fields: DNSProviderField[]
+}
+
+export const acmeDnsProviderApi = {
+  list: () => crudFetch<DNSProviderDef[]>('/api/v1/adm/cert/acme/dns-providers'),
 }
 
 // ── ACME Order API ──────────────────────────────────────────────────────────

@@ -12,8 +12,9 @@ import {
   Plus, Globe, RotateCw, XCircle,
 } from 'lucide-react'
 import {
-  acmeOrderApi, acmeAccountApi,
+  acmeOrderApi, acmeAccountApi, acmeDnsProviderApi,
   type AcmeOrderDTO, type AcmeAccountDTO, type CreateAcmeOrderRequest,
+  type DNSProviderDef,
 } from '@/lib/cert-api'
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants'
 
@@ -43,7 +44,6 @@ function statusVariant(status: string) {
 }
 
 const CHALLENGE_TYPES = ['dns-01', 'http-01'] as const
-const DNS_PROVIDERS = ['cloudflare', 'manual'] as const
 const KEY_TYPES = ['ec256', 'ec384', 'rsa2048', 'rsa4096'] as const
 
 export function AcmeOrderList() {
@@ -52,6 +52,7 @@ export function AcmeOrderList() {
 
   const [orders, setOrders] = useState<AcmeOrderDTO[]>([])
   const [accounts, setAccounts] = useState<AcmeAccountDTO[]>([])
+  const [dnsProviders, setDnsProviders] = useState<DNSProviderDef[]>([])
   const [total, setTotal] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
   const [page, setPage] = useState(1)
@@ -65,7 +66,7 @@ export function AcmeOrderList() {
   const [formDomains, setFormDomains] = useState('')
   const [formChallenge, setFormChallenge] = useState<string>('dns-01')
   const [formDnsProvider, setFormDnsProvider] = useState<string>('cloudflare')
-  const [formDnsToken, setFormDnsToken] = useState('')
+  const [formDnsConfig, setFormDnsConfig] = useState<Record<string, string>>({})
   const [formKeyType, setFormKeyType] = useState<string>('ec256')
   const [creating, setCreating] = useState(false)
 
@@ -77,6 +78,11 @@ export function AcmeOrderList() {
   useEffect(() => {
     acmeAccountApi.list({ page_size: 100 }).then(resp => {
       setAccounts((resp.data?.items ?? []).filter(a => a.status === 'active'))
+    }).catch(() => {})
+    acmeDnsProviderApi.list().then(resp => {
+      const providers = resp.data ?? []
+      setDnsProviders(providers)
+      if (providers.length > 0) setFormDnsProvider(providers[0].name)
     }).catch(() => {})
   }, [])
 
@@ -124,15 +130,19 @@ export function AcmeOrderList() {
       }
       if (formChallenge === 'dns-01') {
         req.dns_provider = formDnsProvider
-        if (formDnsProvider === 'cloudflare' && formDnsToken) {
-          req.dns_config = { api_token: formDnsToken }
+        // Send non-empty credentials as env var key-value map
+        const creds = Object.fromEntries(
+          Object.entries(formDnsConfig).filter(([, v]) => v)
+        )
+        if (Object.keys(creds).length > 0) {
+          req.dns_config = creds
         }
       }
       await acmeOrderApi.create(req)
       setShowCreate(false)
       setFormAccountId('')
       setFormDomains('')
-      setFormDnsToken('')
+      setFormDnsConfig({})
       fetchList()
       toast.success(cl.createSuccess)
     } catch (err: any) {
@@ -302,16 +312,21 @@ export function AcmeOrderList() {
                 <div className="space-y-3">
                   <div>
                     <Label>{cl.fieldDnsProvider}</Label>
-                    <NativeSelect value={formDnsProvider} onChange={v => setFormDnsProvider(v)}>
-                      {DNS_PROVIDERS.map(p => (<option key={p} value={p}>{p}</option>))}
+                    <NativeSelect value={formDnsProvider} onChange={v => { setFormDnsProvider(v); setFormDnsConfig({}) }}>
+                      {dnsProviders.map(p => (<option key={p.name} value={p.name}>{p.label}</option>))}
                     </NativeSelect>
                   </div>
-                  {formDnsProvider === 'cloudflare' && (
-                    <div>
-                      <Label>{cl.fieldDnsToken}</Label>
-                      <Input type="password" value={formDnsToken} onChange={e => setFormDnsToken(e.target.value)} placeholder="Cloudflare API Token" />
+                  {dnsProviders.find(p => p.name === formDnsProvider)?.fields.map(f => (
+                    <div key={f.key}>
+                      <Label>{f.label}</Label>
+                      <Input
+                        type={f.secret ? 'password' : 'text'}
+                        value={formDnsConfig[f.key] ?? ''}
+                        onChange={e => setFormDnsConfig(prev => ({ ...prev, [f.key]: e.target.value }))}
+                        placeholder={f.label}
+                      />
                     </div>
-                  )}
+                  ))}
                   {formDnsProvider === 'manual' && (
                     <p className="text-xs text-amber-600">{cl.fieldDnsManualHint}</p>
                   )}
