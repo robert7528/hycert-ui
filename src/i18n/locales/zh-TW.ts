@@ -466,6 +466,20 @@ const zhTW = {
       actionCancel: '取消',
       cancel: '取消',
     },
+    healthDashboard: {
+      title: '健康檢查',
+      certsExpiringSoon: '即將到期',
+      certsExpiredActive: '已過期（未更新）',
+      deploymentsFailed: '部署失敗',
+      deploymentsPendingLong: '待部署過久',
+      agentsOffline: 'Agent 離線/停用',
+      tokensExpired: 'Token 過期/停用',
+      acmeOrdersFailed: 'ACME 訂單失敗',
+      noIssues: '所有項目正常，無異常',
+      daysRemaining: '天後到期',
+      errorMessage: '錯誤訊息',
+      loading: '載入中...',
+    },
   },
 }
 

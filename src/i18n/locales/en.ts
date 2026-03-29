@@ -466,6 +466,20 @@ const en = {
       actionCancel: 'Cancel',
       cancel: 'Cancel',
     },
+    healthDashboard: {
+      title: 'Health Check',
+      certsExpiringSoon: 'Expiring Soon',
+      certsExpiredActive: 'Expired (Active)',
+      deploymentsFailed: 'Failed Deployments',
+      deploymentsPendingLong: 'Stale Pending Deployments',
+      agentsOffline: 'Agents Offline/Disabled',
+      tokensExpired: 'Tokens Expired/Revoked',
+      acmeOrdersFailed: 'Failed ACME Orders',
+      noIssues: 'All clear — no issues detected',
+      daysRemaining: 'days remaining',
+      errorMessage: 'Error',
+      loading: 'Loading...',
+    },
   },
 }
 

@@ -9,6 +9,7 @@ import { AgentList } from './agent-list'
 import { TokenList } from './token-list'
 import { AcmeAccountList } from './acme-account-list'
 import { AcmeOrderList } from './acme-order-list'
+import { HealthDashboard } from './health-dashboard'
 
 export function CertRouter() {
   const [pathname, setPathname] = useState('')
@@ -48,6 +49,10 @@ export function CertRouter() {
 
   if (pathname.includes('/acme/accounts')) {
     return <AcmeAccountList />
+  }
+
+  if (pathname.includes('/health')) {
+    return <HealthDashboard />
   }
 
   // Default: show toolbox

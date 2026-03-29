@@ -826,3 +826,73 @@ export const acmeOrderApi = {
       method: 'DELETE',
     }),
 }
+
+// ── Health Dashboard API ────────────────────────────────────────────────────
+
+export interface HealthCounts {
+  certs_expiring_soon: number
+  certs_expired_active: number
+  deployments_failed: number
+  deployments_pending_long: number
+  agents_offline: number
+  tokens_expired: number
+  acme_orders_failed: number
+}
+
+export interface CertWarning {
+  id: number
+  name: string
+  common_name: string
+  not_after: string | null
+  days_remaining: number
+  source: string
+}
+
+export interface DeployWarning {
+  id: number
+  certificate_id: number
+  target_host: string
+  target_service: string
+  deploy_status: string
+  updated_at: string
+}
+
+export interface AgentWarning {
+  id: number
+  agent_id: string
+  name: string
+  hostname: string
+  status: string
+  last_seen_at: string | null
+}
+
+export interface TokenWarning {
+  id: number
+  name: string
+  token_prefix: string
+  label: string
+  status: string
+  expires_at: string | null
+}
+
+export interface AcmeOrderWarning {
+  id: number
+  domains: string
+  status: string
+  error_message: string
+}
+
+export interface HealthSummary {
+  counts: HealthCounts
+  certs_expiring_soon: CertWarning[]
+  certs_expired_active: CertWarning[]
+  deployments_failed: DeployWarning[]
+  deployments_pending_long: DeployWarning[]
+  agents_offline: AgentWarning[]
+  tokens_expired: TokenWarning[]
+  acme_orders_failed: AcmeOrderWarning[]
+}
+
+export const dashboardApi = {
+  health: () => crudFetch<HealthSummary>('/api/v1/adm/cert/dashboard/health'),
+}
