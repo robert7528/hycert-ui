@@ -55,6 +55,6 @@ export function CertRouter() {
     return <HealthDashboard />
   }
 
-  // Default: show toolbox
-  return <CertToolbox />
+  // Default: show health dashboard
+  return <HealthDashboard />
 }
