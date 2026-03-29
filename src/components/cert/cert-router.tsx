@@ -55,6 +55,10 @@ export function CertRouter() {
     return <HealthDashboard />
   }
 
+  if (pathname.includes('/toolbox')) {
+    return <CertToolbox />
+  }
+
   // Default: show health dashboard
   return <HealthDashboard />
 }
