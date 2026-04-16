@@ -169,14 +169,16 @@ export function HealthDashboard() {
             <thead>
               <tr className="text-muted-foreground">
                 <th className="text-left py-1">CN</th>
-                <th className="text-left py-1">Not After</th>
+                <th className="text-left py-1">{cl.expiredDays}</th>
+                <th className="text-left py-1">Source</th>
               </tr>
             </thead>
             <tbody>
               {data.certs_expired_active?.map((c: CertWarning) => (
                 <tr key={c.id} className="border-t">
                   <td className="py-1.5 font-medium">{c.common_name}</td>
-                  <td className="py-1.5 text-destructive">{formatDateTime(c.not_after)}</td>
+                  <td className="py-1.5 text-destructive">{cl.expiredDaysAgo.replace('{days}', String(Math.abs(c.days_remaining)))}</td>
+                  <td className="py-1.5 text-muted-foreground">{c.source}</td>
                 </tr>
               ))}
             </tbody>

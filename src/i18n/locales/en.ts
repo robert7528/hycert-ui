@@ -471,7 +471,7 @@ const en = {
     healthDashboard: {
       title: 'Health Check',
       certsExpiringSoon: 'Expiring Soon',
-      certsExpiredActive: 'Expired (Active)',
+      certsExpiredActive: 'Expired (Deployed)',
       deploymentsFailed: 'Failed Deployments',
       deploymentsPendingLong: 'Stale Pending Deployments',
       agentsOffline: 'Agents Offline/Disabled',
@@ -479,6 +479,8 @@ const en = {
       acmeOrdersFailed: 'Failed ACME Orders',
       noIssues: 'All clear — no issues detected',
       daysRemaining: 'days remaining',
+      expiredDays: 'Expired',
+      expiredDaysAgo: 'expired {days} days',
       errorMessage: 'Error',
       loading: 'Loading...',
     },
