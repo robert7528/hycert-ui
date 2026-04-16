@@ -409,6 +409,8 @@ const en = {
       fieldCa: 'Certificate Authority (CA)',
       fieldCaCustom: 'Custom...',
       fieldDirectoryUrl: 'Directory URL',
+      fieldEabKid: 'EAB Key ID',
+      fieldEabHmacKey: 'EAB HMAC Key',
       fieldStatus: 'Status',
       columnName: 'Name',
       columnEmail: 'Email',

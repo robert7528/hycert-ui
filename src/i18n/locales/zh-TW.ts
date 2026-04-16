@@ -409,6 +409,8 @@ const zhTW = {
       fieldCa: '憑證機構（CA）',
       fieldCaCustom: '自訂...',
       fieldDirectoryUrl: 'Directory URL',
+      fieldEabKid: 'EAB Key ID',
+      fieldEabHmacKey: 'EAB HMAC Key',
       fieldStatus: '狀態',
       columnName: '名稱',
       columnEmail: 'Email',

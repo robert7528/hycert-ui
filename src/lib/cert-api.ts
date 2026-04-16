@@ -686,6 +686,8 @@ export interface AcmeAccountDTO {
   name: string
   email: string
   directory_url: string
+  has_eab: boolean
+  eab_kid?: string
   status: string
   created_by: string
   created_at: string
@@ -696,6 +698,8 @@ export interface CreateAcmeAccountRequest {
   name: string
   email: string
   directory_url: string
+  eab_kid?: string
+  eab_hmac_key?: string
 }
 
 export interface UpdateAcmeAccountRequest {

@@ -24,11 +24,12 @@ function formatDateTime(iso: string | null) {
 }
 
 const CA_PRESETS = [
-  { label: "Let's Encrypt", url: 'https://acme-v02.api.letsencrypt.org/directory' },
-  { label: "Let's Encrypt (Staging)", url: 'https://acme-staging-v02.api.letsencrypt.org/directory' },
-  { label: 'ZeroSSL', url: 'https://acme.zerossl.com/v2/DV90' },
-  { label: 'Google Trust Services', url: 'https://dv.acme-v02.api.pki.goo.gl/directory' },
-  { label: 'Buypass', url: 'https://api.buypass.com/acme/directory' },
+  { label: "Let's Encrypt", url: 'https://acme-v02.api.letsencrypt.org/directory', eab: false },
+  { label: "Let's Encrypt (Staging)", url: 'https://acme-staging-v02.api.letsencrypt.org/directory', eab: false },
+  { label: 'Sectigo (GoGetSSL)', url: 'https://acme.sectigo.com/v2/DV', eab: true },
+  { label: 'ZeroSSL', url: 'https://acme.zerossl.com/v2/DV90', eab: true },
+  { label: 'Google Trust Services', url: 'https://dv.acme-v02.api.pki.goo.gl/directory', eab: true },
+  { label: 'Buypass', url: 'https://api.buypass.com/acme/directory', eab: false },
 ]
 
 function caLabel(url: string): string {
@@ -54,6 +55,8 @@ export function AcmeAccountList() {
   const [createEmail, setCreateEmail] = useState('')
   const [createCa, setCreateCa] = useState(CA_PRESETS[0].url)
   const [createCustomUrl, setCreateCustomUrl] = useState('')
+  const [createEabKid, setCreateEabKid] = useState('')
+  const [createEabHmacKey, setCreateEabHmacKey] = useState('')
   const [creating, setCreating] = useState(false)
 
   // Edit dialog
@@ -97,6 +100,12 @@ export function AcmeAccountList() {
 
   useEffect(() => { fetchList() }, [fetchList])
 
+  const needsEab = (() => {
+    if (createCa === 'custom') return true // custom CA may need EAB
+    const preset = CA_PRESETS.find(p => p.url === createCa)
+    return preset?.eab ?? false
+  })()
+
   const handleCreate = async () => {
     if (!createName.trim() || !createEmail.trim()) return
     setCreating(true)
@@ -108,12 +117,18 @@ export function AcmeAccountList() {
         email: createEmail.trim(),
         directory_url: directoryUrl,
       }
+      if (createEabKid.trim() && createEabHmacKey.trim()) {
+        req.eab_kid = createEabKid.trim()
+        req.eab_hmac_key = createEabHmacKey.trim()
+      }
       await acmeAccountApi.create(req)
       setShowCreate(false)
       setCreateName('')
       setCreateEmail('')
       setCreateCa(CA_PRESETS[0].url)
       setCreateCustomUrl('')
+      setCreateEabKid('')
+      setCreateEabHmacKey('')
       fetchList()
       toast.success(cl.createSuccess)
     } catch (err: any) {
@@ -205,7 +220,10 @@ export function AcmeAccountList() {
                     </td>
                     <td className="p-3 text-muted-foreground">{a.email}</td>
                     <td className="p-3">
-                      <Badge variant="outline" className="text-xs">{caLabel(a.directory_url)}</Badge>
+                      <div className="flex items-center gap-1.5">
+                        <Badge variant="outline" className="text-xs">{caLabel(a.directory_url)}</Badge>
+                        {a.has_eab && <Badge variant="secondary" className="text-xs">EAB</Badge>}
+                      </div>
                     </td>
                     <td className="p-3">
                       {a.status === 'active' ? (
@@ -267,6 +285,18 @@ export function AcmeAccountList() {
                   <Label>{cl.fieldDirectoryUrl}</Label>
                   <Input value={createCustomUrl} onChange={e => setCreateCustomUrl(e.target.value)} placeholder="https://acme.example.com/directory" />
                 </div>
+              )}
+              {needsEab && (
+                <>
+                  <div>
+                    <Label>{cl.fieldEabKid}</Label>
+                    <Input value={createEabKid} onChange={e => setCreateEabKid(e.target.value)} placeholder="EAB Key Identifier" />
+                  </div>
+                  <div>
+                    <Label>{cl.fieldEabHmacKey}</Label>
+                    <Input type="password" value={createEabHmacKey} onChange={e => setCreateEabHmacKey(e.target.value)} placeholder="EAB HMAC Key (Base64URL)" />
+                  </div>
+                </>
               )}
             </div>
             <div className="flex justify-end gap-2 mt-6">
