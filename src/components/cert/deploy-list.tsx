@@ -167,7 +167,7 @@ export function DeployList() {
     if (formOpen && formRef.current) {
       formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
-  }, [formOpen])
+  }, [formOpen, editTarget?.id])
 
   // History expand
   const [expandedId, setExpandedId] = useState<number | null>(null)
