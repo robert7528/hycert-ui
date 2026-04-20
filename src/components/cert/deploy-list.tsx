@@ -455,7 +455,25 @@ export function DeployList() {
               <SearchSelect
                 value={formCertId}
                 onChange={setFormCertId}
-                options={certs.map(c => ({ value: String(c.id), label: c.name || c.common_name, description: c.common_name }))}
+                options={certs.map(c => {
+                  // Disambiguate same-CN certs (e.g. multiple ACME orders for the
+                  // same domain with different key algorithms or renewal cycles).
+                  // The label stays short for scannability; description carries
+                  // #id + key algorithm + expiry + fingerprint prefix.
+                  const exp = c.not_after ? new Date(c.not_after).toLocaleDateString('sv-SE') : ''
+                  const fp = c.fingerprint_sha256 ? c.fingerprint_sha256.slice(0, 23) : ''
+                  const parts = [
+                    `#${c.id}`,
+                    c.key_algorithm || '',
+                    exp ? `exp ${exp}` : '',
+                    fp,
+                  ].filter(Boolean)
+                  return {
+                    value: String(c.id),
+                    label: c.name || c.common_name,
+                    description: parts.join(' · '),
+                  }
+                })}
                 placeholder={cl.deployCert}
                 emptyLabel="—"
               />
