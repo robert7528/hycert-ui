@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useLocale } from '@/contexts/locale-context'
 import {
   Badge, Button, Card, CardContent, Input, Label, Textarea,
@@ -161,6 +161,13 @@ export function DeployList() {
   const [editTarget, setEditTarget] = useState<DeploymentDTO | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<DeploymentDTO | null>(null)
   const [saving, setSaving] = useState(false)
+  const formRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (formOpen && formRef.current) {
+      formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [formOpen])
 
   // History expand
   const [expandedId, setExpandedId] = useState<number | null>(null)
@@ -438,7 +445,7 @@ export function DeployList() {
 
       {/* Inline Form */}
       {formOpen && (
-        <Card>
+        <Card ref={formRef}>
           <CardContent className="p-4 space-y-3">
             <h4 className="text-sm font-medium">
               {editTarget ? cl.deployEditTitle : cl.deployCreateTitle}
