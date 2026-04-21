@@ -43,8 +43,8 @@ function parseDetail(raw: string): Record<string, string> {
   }
 }
 
-function formatDetail(d: Record<string, string | undefined>): string {
-  const clean: Record<string, string> = {}
+function formatDetail(d: Record<string, string | number | boolean | undefined>): string {
+  const clean: Record<string, string | number | boolean> = {}
   for (const [k, v] of Object.entries(d)) {
     if (v) clean[k] = v
   }
@@ -61,6 +61,8 @@ function DetailInfo({ raw, cl }: { raw: string; cl: any }) {
       {d.os && <span className="mr-2">{d.os === 'windows' ? 'Windows' : 'Linux'}</span>}
       {d.secret_name && <div>{cl.deploySecretName}: {d.secret_name} ({d.namespace || 'default'})</div>}
       {d.kubeconfig && <div>{cl.deployKubeconfig}: {d.kubeconfig}</div>}
+      {d.verify_endpoint && <div>{cl.deployVerifyEndpoint}: {d.verify_endpoint}{d.verify_sni ? ` (SNI: ${d.verify_sni})` : ''}</div>}
+      {d.skip_verify && <div className="text-amber-500">⚠ {cl.deploySkipVerify}</div>}
       {d.cert_path && <div>{cl.deployCertPath}: {d.cert_path}</div>}
       {d.key_path && <div>{cl.deployKeyPath}: {d.key_path}</div>}
       {d.reload_cmd && <div>{cl.deployReloadCmd}: <code>{d.reload_cmd}</code></div>}
@@ -192,6 +194,10 @@ export function DeployList() {
   const [detailSecretName, setDetailSecretName] = useState('')
   const [detailNamespace, setDetailNamespace] = useState('default')
   const [detailKubeconfig, setDetailKubeconfig] = useState('')
+  const [detailVerifyEndpoint, setDetailVerifyEndpoint] = useState('')
+  const [detailVerifySNI, setDetailVerifySNI] = useState('')
+  const [detailSkipVerify, setDetailSkipVerify] = useState(false)
+  const [detailVerifyTimeout, setDetailVerifyTimeout] = useState('')
 
   const certNameMap = new Map(certs.map(c => [c.id, c.name || c.common_name]))
   const tokenMap = new Map(tokens.map(tk => [tk.id, tk]))
@@ -298,6 +304,10 @@ export function DeployList() {
     setDetailSecretName('')
     setDetailNamespace('default')
     setDetailKubeconfig('')
+    setDetailVerifyEndpoint('')
+    setDetailVerifySNI('')
+    setDetailSkipVerify(false)
+    setDetailVerifyTimeout('')
     setEditTarget(null)
     setFormOpen(false)
   }
@@ -327,6 +337,10 @@ export function DeployList() {
     setDetailSecretName(detail.secret_name || '')
     setDetailNamespace(detail.namespace || 'default')
     setDetailKubeconfig(detail.kubeconfig || '')
+    setDetailVerifyEndpoint(detail.verify_endpoint || '')
+    setDetailVerifySNI(detail.verify_sni || '')
+    setDetailSkipVerify(!!detail.skip_verify)
+    setDetailVerifyTimeout(detail.verify_timeout ? String(detail.verify_timeout) : '')
     setFormOpen(true)
   }
 
@@ -337,6 +351,10 @@ export function DeployList() {
         namespace: detailNamespace || undefined,
         kubeconfig: detailKubeconfig || undefined,
         reload_cmd: detailReloadCmd || undefined,
+        verify_endpoint: detailVerifyEndpoint || undefined,
+        verify_sni: detailVerifySNI || undefined,
+        skip_verify: detailSkipVerify || undefined,
+        verify_timeout: detailVerifyTimeout ? parseInt(detailVerifyTimeout) : undefined,
       })
     }
     return formatDetail({
@@ -554,6 +572,26 @@ export function DeployList() {
                 <div className="space-y-1 col-span-2">
                   <Label className="text-xs">{cl.deployKubeconfig}</Label>
                   <Input value={detailKubeconfig} onChange={e => setDetailKubeconfig(e.target.value)} placeholder="/root/.kube/config" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">{cl.deployVerifyEndpoint}</Label>
+                  <Input value={detailVerifyEndpoint} onChange={e => setDetailVerifyEndpoint(e.target.value)} placeholder="172.30.1.135:443" />
+                  <p className="text-[10px] text-muted-foreground">{cl.deployVerifyEndpointHelp}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">{cl.deployVerifySNI}</Label>
+                  <Input value={detailVerifySNI} onChange={e => setDetailVerifySNI(e.target.value)} placeholder="app.example.com" />
+                  <p className="text-[10px] text-muted-foreground">{cl.deployVerifySNIHelp}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">{cl.deployVerifyTimeout}</Label>
+                  <Input type="number" min="1" value={detailVerifyTimeout} onChange={e => setDetailVerifyTimeout(e.target.value)} placeholder="60" />
+                </div>
+                <div className="space-y-1 flex items-end">
+                  <label className="flex items-center gap-2 text-xs cursor-pointer pb-2">
+                    <input type="checkbox" checked={detailSkipVerify} onChange={e => setDetailSkipVerify(e.target.checked)} />
+                    {cl.deploySkipVerify}
+                  </label>
                 </div>
               </div>
             )}
