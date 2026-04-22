@@ -66,6 +66,8 @@ function DetailInfo({ raw, cl }: { raw: string; cl: any }) {
       {d.cert_path && <div>{cl.deployCertPath}: {d.cert_path}</div>}
       {d.key_path && <div>{cl.deployKeyPath}: {d.key_path}</div>}
       {d.reload_cmd && <div>{cl.deployReloadCmd}: <code>{d.reload_cmd}</code></div>}
+      {d.service_name && <div>{cl.deployServiceName}: {d.service_name}</div>}
+      {d.reload_timeout && <div>{cl.deployReloadTimeout}: {d.reload_timeout}s</div>}
     </div>
   )
 }
@@ -198,6 +200,9 @@ export function DeployList() {
   const [detailVerifySNI, setDetailVerifySNI] = useState('')
   const [detailSkipVerify, setDetailSkipVerify] = useState(false)
   const [detailVerifyTimeout, setDetailVerifyTimeout] = useState('')
+  // Shared advanced settings (all service types)
+  const [detailServiceName, setDetailServiceName] = useState('')
+  const [detailReloadTimeout, setDetailReloadTimeout] = useState('')
 
   const certNameMap = new Map(certs.map(c => [c.id, c.name || c.common_name]))
   const tokenMap = new Map(tokens.map(tk => [tk.id, tk]))
@@ -308,6 +313,8 @@ export function DeployList() {
     setDetailVerifySNI('')
     setDetailSkipVerify(false)
     setDetailVerifyTimeout('')
+    setDetailServiceName('')
+    setDetailReloadTimeout('')
     setEditTarget(null)
     setFormOpen(false)
   }
@@ -341,29 +348,38 @@ export function DeployList() {
     setDetailVerifySNI(detail.verify_sni || '')
     setDetailSkipVerify(!!detail.skip_verify)
     setDetailVerifyTimeout(detail.verify_timeout ? String(detail.verify_timeout) : '')
+    setDetailServiceName(detail.service_name || '')
+    setDetailReloadTimeout(detail.reload_timeout ? String(detail.reload_timeout) : '')
     setFormOpen(true)
   }
 
   const buildDetail = (): string => {
+    // Shared across all service types: reload_cmd, service_name,
+    // reload_timeout, verify_timeout, skip_verify
+    const common = {
+      reload_cmd: detailReloadCmd || undefined,
+      service_name: detailServiceName || undefined,
+      reload_timeout: detailReloadTimeout ? parseInt(detailReloadTimeout) : undefined,
+      verify_timeout: detailVerifyTimeout ? parseInt(detailVerifyTimeout) : undefined,
+      skip_verify: detailSkipVerify || undefined,
+    }
     if (service === 'kubernetes') {
       return formatDetail({
+        ...common,
         secret_name: detailSecretName || undefined,
         namespace: detailNamespace || undefined,
         kubeconfig: detailKubeconfig || undefined,
-        reload_cmd: detailReloadCmd || undefined,
         verify_endpoint: detailVerifyEndpoint || undefined,
         verify_sni: detailVerifySNI || undefined,
-        skip_verify: detailSkipVerify || undefined,
-        verify_timeout: detailVerifyTimeout ? parseInt(detailVerifyTimeout) : undefined,
       })
     }
     return formatDetail({
+      ...common,
       os: detailOs,
       cert_path: detailCertPath || undefined,
       key_path: detailKeyPath || undefined,
       password: detailPassword || undefined,
       alias: detailAlias || undefined,
-      reload_cmd: detailReloadCmd || undefined,
     })
   }
 
@@ -583,16 +599,6 @@ export function DeployList() {
                   <Input value={detailVerifySNI} onChange={e => setDetailVerifySNI(e.target.value)} placeholder="app.example.com" />
                   <p className="text-[10px] text-muted-foreground">{cl.deployVerifySNIHelp}</p>
                 </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">{cl.deployVerifyTimeout}</Label>
-                  <Input type="number" min="1" value={detailVerifyTimeout} onChange={e => setDetailVerifyTimeout(e.target.value)} placeholder="60" />
-                </div>
-                <div className="space-y-1 flex items-end">
-                  <label className="flex items-center gap-2 text-xs cursor-pointer pb-2">
-                    <input type="checkbox" checked={detailSkipVerify} onChange={e => setDetailSkipVerify(e.target.checked)} />
-                    {cl.deploySkipVerify}
-                  </label>
-                </div>
               </div>
             )}
             {(service === 'tomcat' || service === 'iis') && (
@@ -611,7 +617,32 @@ export function DeployList() {
             )}
             <div className="space-y-1">
               <Label className="text-xs">{cl.deployReloadCmd}</Label>
-              <Input value={detailReloadCmd} onChange={e => setDetailReloadCmd(e.target.value)} placeholder={service === 'kubernetes' ? 'kubectl rollout restart deploy/my-app -n default' : service === 'iis' ? 'iisreset /restart' : service === 'tomcat' ? 'Restart-Service Tomcat8' : 'nginx -s reload'} />
+              <Input value={detailReloadCmd} onChange={e => setDetailReloadCmd(e.target.value)} placeholder={service === 'kubernetes' ? 'kubectl rollout restart deploy/my-app -n default' : service === 'iis' ? 'iisreset /restart' : service === 'tomcat' ? 'Stop-Service Tomcat8 -Force; Start-Sleep 15; Start-Service Tomcat8' : 'nginx -s reload'} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {service !== 'kubernetes' && (
+                <div className="space-y-1 col-span-2">
+                  <Label className="text-xs">{cl.deployServiceName}</Label>
+                  <Input value={detailServiceName} onChange={e => setDetailServiceName(e.target.value)} placeholder={service === 'tomcat' ? 'Tomcat9' : service === 'iis' ? 'W3SVC' : 'nginx.service'} />
+                  <p className="text-[10px] text-muted-foreground">{cl.deployServiceNameHelp}</p>
+                </div>
+              )}
+              <div className="space-y-1">
+                <Label className="text-xs">{cl.deployReloadTimeout}</Label>
+                <Input type="number" min="1" value={detailReloadTimeout} onChange={e => setDetailReloadTimeout(e.target.value)} placeholder={service === 'tomcat' || service === 'iis' || service === 'kubernetes' ? '60' : '30'} />
+                <p className="text-[10px] text-muted-foreground">{cl.deployReloadTimeoutHelp}</p>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">{cl.deployVerifyTimeout}</Label>
+                <Input type="number" min="1" value={detailVerifyTimeout} onChange={e => setDetailVerifyTimeout(e.target.value)} placeholder={service === 'tomcat' || service === 'iis' ? '180' : service === 'kubernetes' ? '60' : '30'} />
+                <p className="text-[10px] text-muted-foreground">{cl.deployVerifyTimeoutHelp}</p>
+              </div>
+              <div className="space-y-1 col-span-2 flex items-end">
+                <label className="flex items-center gap-2 text-xs cursor-pointer pb-2">
+                  <input type="checkbox" checked={detailSkipVerify} onChange={e => setDetailSkipVerify(e.target.checked)} />
+                  {cl.deploySkipVerify}
+                </label>
+              </div>
             </div>
             {editTarget && (
               <div className="space-y-1">
