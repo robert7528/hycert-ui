@@ -184,7 +184,7 @@ export function CertDetailDialog({ cert, onClose }: Props) {
             <Row label={cl.columnAlgorithm}>{cert.key_algorithm}</Row>
             <Row label={cl.columnStatus}>
               <Badge variant={statusVariant(cert.status)}>
-                {cert.status === 'active' ? cl.statusActive : cert.status === 'expired' ? cl.statusExpired : cl.statusRevoked}
+                {cert.status === 'active' ? cl.statusActive : cert.status === 'expired' ? cl.statusExpired : cert.status === 'superseded' ? cl.statusSuperseded : cl.statusRevoked}
               </Badge>
             </Row>
             <Row label={t.hycert.toolbox.result.notBefore}>{formatDate(cert.not_before)}</Row>
