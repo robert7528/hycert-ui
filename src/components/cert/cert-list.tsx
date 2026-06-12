@@ -32,7 +32,7 @@ function statusVariant(status: string): 'default' | 'secondary' | 'destructive' 
   return 'secondary'
 }
 
-const STATUS_OPTIONS = ['', 'active', 'expired', 'revoked'] as const
+const STATUS_OPTIONS = ['', 'active', 'expired', 'revoked', 'superseded'] as const
 
 export function CertList() {
   const { t } = useLocale()
@@ -138,6 +138,7 @@ export function CertList() {
   const statusLabel = (s: string) => {
     if (s === 'active') return cl.statusActive
     if (s === 'expired') return cl.statusExpired
+    if (s === 'superseded') return cl.statusSuperseded
     return cl.statusRevoked
   }
 
@@ -145,6 +146,7 @@ export function CertList() {
     if (s === '') return cl.filterAll
     if (s === 'active') return cl.filterActive
     if (s === 'expired') return cl.filterExpired
+    if (s === 'superseded') return cl.filterSuperseded
     return cl.filterRevoked
   }
 

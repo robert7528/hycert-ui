@@ -3,6 +3,8 @@ name: Build & Push
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
 
 env:
   IMAGE: ghcr.io/robert7528/hycert-ui
@@ -40,7 +42,10 @@ jobs:
         with:
           context: .
           file: Containerfile
-          push: true
+          # Only push the image on a real push to main. On pull requests we
+          # still build (vite build runs inside the Containerfile = compile check)
+          # but do not push or deploy.
+          push: ${{ github.event_name == 'push' }}
           tags: |
             ${{ env.IMAGE }}:latest
             ${{ env.IMAGE }}:${{ github.sha }}
