@@ -9,7 +9,7 @@ import {
 import { NativeSelect } from '@/components/ui/native-select'
 import {
   Search, Loader2, ChevronLeft, ChevronRight,
-  Plus, Globe, RotateCw, XCircle,
+  Plus, Globe, RotateCw, XCircle, Trash2,
 } from 'lucide-react'
 import {
   acmeOrderApi, acmeAccountApi, acmeDnsProviderApi,
@@ -173,6 +173,8 @@ export function AcmeOrderList() {
     }
   }
 
+  const cancelIsDelete = cancelTarget?.status === 'failed' || cancelTarget?.status === 'cancelled'
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -255,6 +257,11 @@ export function AcmeOrderList() {
                           {(o.status === 'pending' || o.status === 'processing') && (
                             <Button variant="outline" size="sm" className="text-destructive" onClick={() => setCancelTarget(o)} title={cl.actionCancel}>
                               <XCircle className="h-3 w-3" />
+                            </Button>
+                          )}
+                          {(o.status === 'failed' || o.status === 'cancelled') && (
+                            <Button variant="outline" size="sm" className="text-destructive" onClick={() => setCancelTarget(o)} title={cl.actionDelete}>
+                              <Trash2 className="h-3 w-3" />
                             </Button>
                           )}
                         </div>
@@ -349,9 +356,9 @@ export function AcmeOrderList() {
 
       <ConfirmModal
         open={!!cancelTarget}
-        title={cl.cancelTitle}
-        description={cl.cancelConfirm}
-        confirmLabel={cl.actionCancel}
+        title={cancelIsDelete ? cl.deleteTitle : cl.cancelTitle}
+        description={cancelIsDelete ? cl.deleteConfirm : cl.cancelConfirm}
+        confirmLabel={cancelIsDelete ? cl.actionDelete : cl.actionCancel}
         variant="destructive"
         onConfirm={handleCancel}
         onCancel={() => setCancelTarget(null)}
