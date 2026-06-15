@@ -451,6 +451,8 @@ const zhTW = {
       renewSuccess: '續約已啟動',
       cancelTitle: '取消訂單',
       cancelConfirm: '確定取消此訂單？',
+      deleteTitle: '刪除訂單',
+      deleteConfirm: '確定刪除此訂單？此操作無法復原（不影響已簽發的憑證）。',
       fieldAccount: 'ACME 帳戶',
       fieldAccountSelect: '選擇帳戶',
       fieldDomains: '域名',
@@ -479,6 +481,7 @@ const zhTW = {
       autoRenewNo: '否',
       actionRenew: '手動續約',
       actionCancel: '取消',
+      actionDelete: '刪除',
       cancel: '取消',
     },
     healthDashboard: {

@@ -451,6 +451,8 @@ const en = {
       renewSuccess: 'Renewal started',
       cancelTitle: 'Cancel Order',
       cancelConfirm: 'Cancel this order?',
+      deleteTitle: 'Delete Order',
+      deleteConfirm: 'Delete this order? This cannot be undone (issued certificates are not affected).',
       fieldAccount: 'ACME Account',
       fieldAccountSelect: 'Select account',
       fieldDomains: 'Domains',
@@ -479,6 +481,7 @@ const en = {
       autoRenewNo: 'No',
       actionRenew: 'Renew',
       actionCancel: 'Cancel',
+      actionDelete: 'Delete',
       cancel: 'Cancel',
     },
     healthDashboard: {
