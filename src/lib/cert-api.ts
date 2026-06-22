@@ -566,11 +566,12 @@ export interface AgentTokenListResponse {
 }
 
 export const agentTokenApi = {
-  list: (params?: { page?: number; page_size?: number; status?: string }) => {
+  list: (params?: { page?: number; page_size?: number; status?: string; search?: string }) => {
     const qs = new URLSearchParams()
     if (params?.page) qs.set('page', String(params.page))
     if (params?.page_size) qs.set('page_size', String(params.page_size))
     if (params?.status) qs.set('status', String(params.status))
+    if (params?.search) qs.set('search', params.search)
     const q = qs.toString()
     return certFetch<AgentTokenListResponse>(`/api/v1/adm/cert/agent-tokens${q ? `?${q}` : ''}`)
   },
@@ -761,11 +762,12 @@ export interface AcmeOrderListResponse {
 // ── ACME Account API ────────────────────────────────────────────────────────
 
 export const acmeAccountApi = {
-  list: (params?: { page?: number; page_size?: number; status?: string }) => {
+  list: (params?: { page?: number; page_size?: number; status?: string; search?: string }) => {
     const qs = new URLSearchParams()
     if (params?.page) qs.set('page', String(params.page))
     if (params?.page_size) qs.set('page_size', String(params.page_size))
     if (params?.status) qs.set('status', params.status)
+    if (params?.search) qs.set('search', params.search)
     const q = qs.toString()
     return crudFetch<AcmeAccountListResponse>(`/api/v1/adm/cert/acme/accounts${q ? `?${q}` : ''}`)
   },
@@ -808,12 +810,13 @@ export const acmeDnsProviderApi = {
 // ── ACME Order API ──────────────────────────────────────────────────────────
 
 export const acmeOrderApi = {
-  list: (params?: { page?: number; page_size?: number; account_id?: number; status?: string }) => {
+  list: (params?: { page?: number; page_size?: number; account_id?: number; status?: string; search?: string }) => {
     const qs = new URLSearchParams()
     if (params?.page) qs.set('page', String(params.page))
     if (params?.page_size) qs.set('page_size', String(params.page_size))
     if (params?.account_id) qs.set('account_id', String(params.account_id))
     if (params?.status) qs.set('status', params.status)
+    if (params?.search) qs.set('search', params.search)
     const q = qs.toString()
     return crudFetch<AcmeOrderListResponse>(`/api/v1/adm/cert/acme/orders${q ? `?${q}` : ''}`)
   },

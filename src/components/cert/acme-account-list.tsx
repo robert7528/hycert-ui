@@ -48,6 +48,7 @@ export function AcmeAccountList() {
   const [loading, setLoading] = useState(false)
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
 
   // Create dialog
   const [showCreate, setShowCreate] = useState(false)
@@ -79,16 +80,13 @@ export function AcmeAccountList() {
   const fetchList = useCallback(async () => {
     setLoading(true)
     try {
-      const resp = await acmeAccountApi.list({ page, page_size: pageSize })
-      let items = resp.data?.items ?? []
-      if (search) {
-        const q = search.toLowerCase()
-        items = items.filter(a =>
-          a.name.toLowerCase().includes(q) ||
-          a.email.toLowerCase().includes(q)
-        )
-      }
-      setAccounts(items)
+      const resp = await acmeAccountApi.list({
+        page,
+        page_size: pageSize,
+        search: search || undefined,
+        status: statusFilter || undefined,
+      })
+      setAccounts(resp.data?.items ?? [])
       setTotal(resp.data?.total ?? 0)
       setTotalPages(resp.data?.total_pages ?? 0)
     } catch (err: any) {
@@ -96,7 +94,7 @@ export function AcmeAccountList() {
     } finally {
       setLoading(false)
     }
-  }, [page, search])
+  }, [page, search, statusFilter])
 
   useEffect(() => { fetchList() }, [fetchList])
 
@@ -187,6 +185,18 @@ export function AcmeAccountList() {
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input className="pl-8" placeholder={cl.searchPlaceholder} value={searchInput} onChange={e => setSearchInput(e.target.value)} />
+        </div>
+        <div className="flex gap-1">
+          {(['', 'active', 'inactive'] as const).map(s => (
+            <Button
+              key={s || 'all'}
+              variant={statusFilter === s ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => { setStatusFilter(s); setPage(1) }}
+            >
+              {s === '' ? cl.filterAll : s === 'active' ? cl.statusActive : cl.statusInactive}
+            </Button>
+          ))}
         </div>
         {total > 0 && <span className="text-sm text-muted-foreground ml-auto">{cl.totalItems.replace('{count}', String(total))}</span>}
       </div>

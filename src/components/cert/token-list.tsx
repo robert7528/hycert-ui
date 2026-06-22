@@ -39,6 +39,7 @@ export function TokenList() {
   const [loading, setLoading] = useState(false)
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
 
   // Create dialog
   const [showCreate, setShowCreate] = useState(false)
@@ -77,20 +78,13 @@ export function TokenList() {
   const fetchList = useCallback(async () => {
     setLoading(true)
     try {
-      const resp = await agentTokenApi.list({ page, page_size: pageSize })
-      let items = resp.data?.items ?? []
-
-      if (search) {
-        const q = search.toLowerCase()
-        items = items.filter(tk =>
-          tk.name.toLowerCase().includes(q) ||
-          tk.token_prefix.toLowerCase().includes(q) ||
-          tk.label.toLowerCase().includes(q) ||
-          tk.created_by.toLowerCase().includes(q)
-        )
-      }
-
-      setTokens(items)
+      const resp = await agentTokenApi.list({
+        page,
+        page_size: pageSize,
+        search: search || undefined,
+        status: statusFilter || undefined,
+      })
+      setTokens(resp.data?.items ?? [])
       setTotal(resp.data?.total ?? 0)
       setTotalPages(resp.data?.total_pages ?? 0)
     } catch (err: any) {
@@ -98,7 +92,7 @@ export function TokenList() {
     } finally {
       setLoading(false)
     }
-  }, [page, search])
+  }, [page, search, statusFilter])
 
   useEffect(() => { fetchList() }, [fetchList])
 
@@ -231,6 +225,18 @@ export function TokenList() {
             value={searchInput}
             onChange={e => setSearchInput(e.target.value)}
           />
+        </div>
+        <div className="flex gap-1">
+          {(['', 'active', 'revoked'] as const).map(s => (
+            <Button
+              key={s || 'all'}
+              variant={statusFilter === s ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => { setStatusFilter(s); setPage(1) }}
+            >
+              {s === '' ? cl.filterAll : s === 'active' ? cl.statusActive : cl.statusRevoked}
+            </Button>
+          ))}
         </div>
         {total > 0 && (
           <span className="text-sm text-muted-foreground ml-auto">

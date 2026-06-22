@@ -367,6 +367,7 @@ const zhTW = {
     tokenList: {
       title: 'Token 管理',
       searchPlaceholder: '搜尋名稱或前綴...',
+      filterAll: '全部',
       empty: '尚無 Token',
       totalItems: '共 {count} 筆',
       pagination: '{page} / {total}',
@@ -411,6 +412,7 @@ const zhTW = {
     acmeAccount: {
       title: 'ACME 帳戶',
       searchPlaceholder: '搜尋名稱或 Email...',
+      filterAll: '全部',
       empty: '尚無 ACME 帳戶',
       totalItems: '共 {count} 筆',
       pagination: '{page} / {total}',
@@ -445,6 +447,7 @@ const zhTW = {
     acmeOrder: {
       title: 'ACME 訂單',
       searchPlaceholder: '搜尋域名...',
+      filterAll: '全部',
       empty: '尚無 ACME 訂單',
       totalItems: '共 {count} 筆',
       pagination: '{page} / {total}',

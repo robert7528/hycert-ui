@@ -367,6 +367,7 @@ const en = {
     tokenList: {
       title: 'Token Management',
       searchPlaceholder: 'Search by name or prefix...',
+      filterAll: 'All',
       empty: 'No tokens',
       totalItems: '{count} tokens',
       pagination: '{page} / {total}',
@@ -411,6 +412,7 @@ const en = {
     acmeAccount: {
       title: 'ACME Accounts',
       searchPlaceholder: 'Search by name or email...',
+      filterAll: 'All',
       empty: 'No ACME accounts',
       totalItems: '{count} accounts',
       pagination: '{page} / {total}',
@@ -445,6 +447,7 @@ const en = {
     acmeOrder: {
       title: 'ACME Orders',
       searchPlaceholder: 'Search by domain...',
+      filterAll: 'All',
       empty: 'No ACME orders',
       totalItems: '{count} orders',
       pagination: '{page} / {total}',

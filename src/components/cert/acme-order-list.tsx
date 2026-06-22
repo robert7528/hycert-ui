@@ -59,6 +59,7 @@ export function AcmeOrderList() {
   const [loading, setLoading] = useState(false)
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
 
   // Create dialog
   const [showCreate, setShowCreate] = useState(false)
@@ -94,16 +95,13 @@ export function AcmeOrderList() {
   const fetchList = useCallback(async () => {
     setLoading(true)
     try {
-      const resp = await acmeOrderApi.list({ page, page_size: pageSize })
-      let items = resp.data?.items ?? []
-      if (search) {
-        const q = search.toLowerCase()
-        items = items.filter(o =>
-          parseDomains(o.domains).some(d => d.toLowerCase().includes(q)) ||
-          o.dns_provider.toLowerCase().includes(q)
-        )
-      }
-      setOrders(items)
+      const resp = await acmeOrderApi.list({
+        page,
+        page_size: pageSize,
+        search: search || undefined,
+        status: statusFilter || undefined,
+      })
+      setOrders(resp.data?.items ?? [])
       setTotal(resp.data?.total ?? 0)
       setTotalPages(resp.data?.total_pages ?? 0)
     } catch (err: any) {
@@ -111,7 +109,7 @@ export function AcmeOrderList() {
     } finally {
       setLoading(false)
     }
-  }, [page, search])
+  }, [page, search, statusFilter])
 
   useEffect(() => { fetchList() }, [fetchList])
 
@@ -188,6 +186,18 @@ export function AcmeOrderList() {
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input className="pl-8" placeholder={cl.searchPlaceholder} value={searchInput} onChange={e => setSearchInput(e.target.value)} />
+        </div>
+        <div className="flex flex-wrap gap-1">
+          {(['', 'pending', 'processing', 'valid', 'failed', 'cancelled'] as const).map(s => (
+            <Button
+              key={s || 'all'}
+              variant={statusFilter === s ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => { setStatusFilter(s); setPage(1) }}
+            >
+              {s === '' ? cl.filterAll : cl[`status_${s}` as keyof typeof cl]}
+            </Button>
+          ))}
         </div>
         {total > 0 && <span className="text-sm text-muted-foreground ml-auto">{cl.totalItems.replace('{count}', String(total))}</span>}
       </div>
