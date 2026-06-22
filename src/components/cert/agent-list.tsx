@@ -42,6 +42,7 @@ function parseIPs(raw: string): string[] {
 }
 
 const STATUS_FILTERS = ['all', 'online', 'offline'] as const
+const ENABLE_FILTERS = ['all', 'active', 'disabled'] as const
 
 export function AgentList() {
   const { t } = useLocale()
@@ -56,6 +57,7 @@ export function AgentList() {
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [enabledFilter, setEnabledFilter] = useState<string>('all')
 
   const pageSize = DEFAULT_PAGE_SIZE
 
@@ -68,26 +70,14 @@ export function AgentList() {
   const fetchList = useCallback(async () => {
     setLoading(true)
     try {
-      const resp = await agentRegistrationApi.list({ page, page_size: pageSize })
-      let items = resp.data?.items ?? []
-
-      // Client-side filtering (API doesn't support search/status filter yet)
-      if (search) {
-        const q = search.toLowerCase()
-        items = items.filter(a =>
-          a.name.toLowerCase().includes(q) ||
-          a.hostname.toLowerCase().includes(q) ||
-          a.agent_id.toLowerCase().includes(q) ||
-          parseIPs(a.ip_addresses).some(ip => ip.includes(q))
-        )
-      }
-      if (statusFilter === 'online') {
-        items = items.filter(a => isOnline(a))
-      } else if (statusFilter === 'offline') {
-        items = items.filter(a => !isOnline(a))
-      }
-
-      setAgents(items)
+      const resp = await agentRegistrationApi.list({
+        page,
+        page_size: pageSize,
+        search: search || undefined,
+        online_status: statusFilter !== 'all' ? statusFilter : undefined,
+        status: enabledFilter !== 'all' ? enabledFilter : undefined,
+      })
+      setAgents(resp.data?.items ?? [])
       setTotal(resp.data?.total ?? 0)
       setTotalPages(resp.data?.total_pages ?? 0)
     } catch (err: any) {
@@ -95,7 +85,7 @@ export function AgentList() {
     } finally {
       setLoading(false)
     }
-  }, [page, search, statusFilter])
+  }, [page, search, statusFilter, enabledFilter])
 
   useEffect(() => { fetchList() }, [fetchList])
 
@@ -150,7 +140,8 @@ export function AgentList() {
             onChange={e => setSearchInput(e.target.value)}
           />
         </div>
-        <div className="flex gap-1">
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-muted-foreground mr-1">{cl.filterStatusLabel}</span>
           {STATUS_FILTERS.map(f => (
             <Button
               key={f}
@@ -159,6 +150,19 @@ export function AgentList() {
               onClick={() => { setStatusFilter(f); setPage(1) }}
             >
               {f === 'all' ? cl.filterAll : f === 'online' ? cl.filterOnline : cl.filterOffline}
+            </Button>
+          ))}
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-muted-foreground mr-1">{cl.filterEnableLabel}</span>
+          {ENABLE_FILTERS.map(f => (
+            <Button
+              key={f}
+              variant={enabledFilter === f ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => { setEnabledFilter(f); setPage(1) }}
+            >
+              {f === 'all' ? cl.filterAll : f === 'active' ? cl.filterEnabled : cl.filterDisabled}
             </Button>
           ))}
         </div>

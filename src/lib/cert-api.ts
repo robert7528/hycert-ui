@@ -503,10 +503,13 @@ export interface AgentRegistrationListResponse {
 }
 
 export const agentRegistrationApi = {
-  list: (params?: { page?: number; page_size?: number }) => {
+  list: (params?: { page?: number; page_size?: number; search?: string; status?: string; online_status?: string }) => {
     const qs = new URLSearchParams()
     if (params?.page) qs.set('page', String(params.page))
     if (params?.page_size) qs.set('page_size', String(params.page_size))
+    if (params?.search) qs.set('search', params.search)
+    if (params?.status) qs.set('status', params.status)
+    if (params?.online_status) qs.set('online_status', params.online_status)
     const q = qs.toString()
     return crudFetch<AgentRegistrationListResponse>(`/api/v1/adm/cert/agent-registrations${q ? `?${q}` : ''}`)
   },
