@@ -459,14 +459,18 @@ export function DeployList() {
           />
         </div>
         <div className="flex gap-1">
-          {(['', 'deployed', 'pending', 'failed'] as const).map(s => (
+          {(['', 'pending', 'deploying', 'deployed', 'failed'] as const).map(s => (
             <Button
               key={s || 'all'}
               variant={deployStatusFilter === s ? 'default' : 'outline'}
               size="sm"
               onClick={() => { setDeployStatusFilter(s); setPage(1) }}
             >
-              {s === '' ? cl.deployFilterAll : s === 'deployed' ? cl.deployAgentDeployed : s === 'pending' ? cl.deployAgentPending : cl.deployAgentFailed}
+              {s === '' ? cl.deployFilterAll
+                : s === 'pending' ? cl.deployAgentPending
+                : s === 'deploying' ? cl.deployAgentDeploying
+                : s === 'deployed' ? cl.deployAgentDeployed
+                : cl.deployAgentFailed}
             </Button>
           ))}
         </div>
