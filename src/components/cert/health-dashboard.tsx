@@ -322,13 +322,26 @@ export function HealthDashboard() {
             <thead>
               <tr className="text-muted-foreground">
                 <th className="text-left py-1">Domains</th>
+                <th className="text-left py-1 whitespace-nowrap">{cl.lastAttemptAt}</th>
+                <th className="text-left py-1 whitespace-nowrap">{cl.retryStateHeader}</th>
                 <th className="text-left py-1">{cl.errorMessage}</th>
               </tr>
             </thead>
             <tbody>
               {data.acme_orders_failed?.map((o: AcmeOrderWarning) => (
-                <tr key={o.id} className="border-t">
+                <tr key={o.id} className="border-t align-top">
                   <td className="py-1.5 font-medium">{parseDomains(o.domains)}</td>
+                  {/* An em dash here is meaningful, not missing data: the renewal scanner
+                      has never touched this order, which is what 'manual' rows look like. */}
+                  <td className="py-1.5 whitespace-nowrap text-muted-foreground">
+                    {o.last_attempt_at ? formatDateTime(o.last_attempt_at) : '—'}
+                    {o.retry_count > 0 && ` · ${o.retry_count}`}
+                  </td>
+                  <td className="py-1.5 whitespace-nowrap">
+                    <Badge variant="outline" className="text-xs">
+                      {cl[`retryState_${o.retry_state}` as keyof typeof cl] ?? o.retry_state}
+                    </Badge>
+                  </td>
                   <td className="py-1.5 text-destructive text-xs">{o.error_message || '—'}</td>
                 </tr>
               ))}

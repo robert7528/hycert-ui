@@ -731,12 +731,16 @@ export interface AcmeOrderDTO {
   dns_provider: string
   key_type: string
   status: string
+  /** acme.RetryStateOf output: 'scheduled' | 'exhausted' | 'manual'; '' unless failed */
+  retry_state: string
   error_message: string
   order_url: string
   renew_from_id: number | null
   auto_renew: boolean
   renew_before_days: number
   last_renewed_at: string | null
+  retry_count: number
+  last_attempt_at: string | null
   requested_by: string
   created_at: string
   updated_at: string
@@ -890,6 +894,13 @@ export interface AcmeOrderWarning {
   domains: string
   status: string
   error_message: string
+  certificate_id: number | null
+  retry_count: number
+  /** acme.RetryStateOf output: 'scheduled' | 'exhausted' | 'manual' */
+  retry_state: string
+  last_attempt_at: string | null
+  last_renewed_at: string | null
+  updated_at: string
 }
 
 export interface HealthSummary {

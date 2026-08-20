@@ -251,9 +251,30 @@ export function AcmeOrderList() {
                         <Badge variant={statusVariant(o.status)} className={`text-xs ${o.status === 'valid' ? 'bg-green-600' : ''}`}>
                           {cl[`status_${o.status}` as keyof typeof cl] ?? o.status}
                         </Badge>
+                        {o.retry_state && (
+                          <Badge variant="outline" className="text-xs ml-1">
+                            {cl[`retryState_${o.retry_state}` as keyof typeof cl] ?? o.retry_state}
+                          </Badge>
+                        )}
                         {o.error_message && (
                           <div className="text-xs text-destructive mt-1">{o.error_message}</div>
                         )}
+                        {/* When something happened matters as much as what: created_at
+                            dates the order, not the outcome, and those can be months
+                            apart. A succeeded order reports when it last renewed; anything
+                            else reports its last attempt, since that is what dates the
+                            error text above. Note last_attempt_at is stamped on success
+                            too, so the valid case has to be checked first. */}
+                        {o.status === 'valid' && o.last_renewed_at ? (
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {cl.lastRenewedAt} {formatDateTime(o.last_renewed_at)}
+                          </div>
+                        ) : o.last_attempt_at ? (
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {cl.lastAttemptAt} {formatDateTime(o.last_attempt_at)}
+                            {o.retry_count > 0 && ` · ${cl.retryCountSuffix.replace('{n}', String(o.retry_count))}`}
+                          </div>
+                        ) : null}
                       </td>
                       <td className="p-3 text-xs">{o.auto_renew ? cl.autoRenewYes : cl.autoRenewNo}</td>
                       <td className="p-3 text-xs text-muted-foreground">{formatDateTime(o.created_at)}</td>
