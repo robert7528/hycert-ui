@@ -259,12 +259,16 @@ export function AcmeOrderList() {
                       <td className="p-3 text-xs text-muted-foreground">{formatDateTime(o.created_at)}</td>
                       <td className="p-3">
                         <div className="flex gap-1">
-                          {/* 'failed' is included deliberately: a failed order is either
-                              waiting out the renewal scanner's exponential backoff or has
-                              exhausted its retries, and this button is the only way for a
-                              human to restart it. Keep in step with acme.Service.RenewOrder,
-                              which accepts exactly these two states. */}
-                          {(o.status === 'valid' || o.status === 'failed') && (
+                          {/* A failed order is offered a retry only when it already has a
+                              certificate, i.e. a failed *renewal* -- that is the case the
+                              scanner may have parked behind a backoff or given up on, and
+                              the only one where "renew" means what it says. A failed initial
+                              issuance has nothing to renew: the API would fall through to a
+                              fresh issuance and leave an orphaned certificate plus a second
+                              auto-renewing order for a domain already covered elsewhere.
+                              Those rows get the delete button below instead. Keep in step
+                              with acme.Service.RenewOrder. */}
+                          {(o.status === 'valid' || (o.status === 'failed' && o.certificate_id !== null)) && (
                             <Button variant="outline" size="sm" onClick={() => handleRenew(o)} title={cl.actionRenew}>
                               <RotateCw className="h-3 w-3" />
                             </Button>
