@@ -259,7 +259,12 @@ export function AcmeOrderList() {
                       <td className="p-3 text-xs text-muted-foreground">{formatDateTime(o.created_at)}</td>
                       <td className="p-3">
                         <div className="flex gap-1">
-                          {o.status === 'valid' && (
+                          {/* 'failed' is included deliberately: a failed order is either
+                              waiting out the renewal scanner's exponential backoff or has
+                              exhausted its retries, and this button is the only way for a
+                              human to restart it. Keep in step with acme.Service.RenewOrder,
+                              which accepts exactly these two states. */}
+                          {(o.status === 'valid' || o.status === 'failed') && (
                             <Button variant="outline" size="sm" onClick={() => handleRenew(o)} title={cl.actionRenew}>
                               <RotateCw className="h-3 w-3" />
                             </Button>
