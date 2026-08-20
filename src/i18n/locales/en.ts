@@ -401,7 +401,7 @@ const en = {
       fieldLabelPlaceholder: 'e.g., customer-A, prod',
       fieldLabelHint: 'Used for grouping, leave empty for no grouping',
       revokeTitle: 'Revoke Token',
-      revokeConfirm: 'Revoke token "{name}"? All agents using this token will lose access.',
+      revokeConfirm: 'Revoke token "{name}"? All agents using this token lose access immediately. Revoking cannot be undone — the token can only be deleted and recreated.',
       revealTitle: 'Token Created',
       revealWarning: 'Please keep this token safe. You can reveal it again from Token Management.',
       copy: 'Copy',
