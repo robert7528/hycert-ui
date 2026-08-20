@@ -274,7 +274,17 @@ export function AcmeOrderList() {
                             {cl.lastAttemptAt} {formatDateTime(o.last_attempt_at)}
                             {o.retry_count > 0 && ` · ${cl.retryCountSuffix.replace('{n}', String(o.retry_count))}`}
                           </div>
-                        ) : null}
+                        ) : (
+                          /* An order the scanner never touched has no last_attempt_at, which
+                             is every failed initial issuance -- and those are the rows most
+                             in need of a date. updated_at is when the error was written, so
+                             it answers the question for them, but it also moves if anyone
+                             edits the order later. Hence the different label: close enough
+                             to be useful, labelled honestly enough not to mislead. */
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {cl.lastUpdatedAt} {formatDateTime(o.updated_at)}
+                          </div>
+                        )}
                       </td>
                       <td className="p-3 text-xs">{o.auto_renew ? cl.autoRenewYes : cl.autoRenewNo}</td>
                       <td className="p-3 text-xs text-muted-foreground">{formatDateTime(o.created_at)}</td>

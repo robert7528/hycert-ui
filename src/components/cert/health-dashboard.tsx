@@ -321,23 +321,30 @@ export function HealthDashboard() {
           <table className="w-full text-xs">
             <thead>
               <tr className="text-muted-foreground">
-                <th className="text-left py-1">Domains</th>
-                <th className="text-left py-1 whitespace-nowrap">{cl.lastAttemptAt}</th>
-                <th className="text-left py-1 whitespace-nowrap">{cl.retryStateHeader}</th>
+                <th className="text-left py-1 pr-3">Domains</th>
+                <th className="text-left py-1 pr-3 whitespace-nowrap">{cl.timeHeader}</th>
+                <th className="text-left py-1 pr-3 whitespace-nowrap">{cl.retryStateHeader}</th>
                 <th className="text-left py-1">{cl.errorMessage}</th>
               </tr>
             </thead>
             <tbody>
               {data.acme_orders_failed?.map((o: AcmeOrderWarning) => (
                 <tr key={o.id} className="border-t align-top">
-                  <td className="py-1.5 font-medium">{parseDomains(o.domains)}</td>
-                  {/* An em dash here is meaningful, not missing data: the renewal scanner
-                      has never touched this order, which is what 'manual' rows look like. */}
-                  <td className="py-1.5 whitespace-nowrap text-muted-foreground">
-                    {o.last_attempt_at ? formatDateTime(o.last_attempt_at) : '—'}
+                  <td className="py-1.5 pr-3 font-medium">{parseDomains(o.domains)}</td>
+                  {/* Orders the scanner never touched have no last_attempt_at -- every
+                      failed initial issuance -- and those are the rows most in need of a
+                      date. updated_at is when the error was written, so it answers the
+                      question for them; it also moves if anyone edits the order later,
+                      which is why the kind is spelled out next to the time instead of
+                      being implied by the column header. */}
+                  <td className="py-1.5 pr-3 whitespace-nowrap text-muted-foreground">
+                    {formatDateTime(o.last_attempt_at ?? o.updated_at)}
+                    <span className="ml-1 opacity-60">
+                      {o.last_attempt_at ? cl.timeKindAttempt : cl.timeKindUpdated}
+                    </span>
                     {o.retry_count > 0 && ` · ${o.retry_count}`}
                   </td>
-                  <td className="py-1.5 whitespace-nowrap">
+                  <td className="py-1.5 pr-3 whitespace-nowrap">
                     <Badge variant="outline" className="text-xs">
                       {cl[`retryState_${o.retry_state}` as keyof typeof cl] ?? o.retry_state}
                     </Badge>
