@@ -210,6 +210,8 @@ export interface CertificateDTO {
   created_by: string
   created_at: string
   updated_at: string
+  /** Active deployment targets pointing at this cert. Only the list endpoint fills it. */
+  deployment_count: number
 }
 
 export interface CertListResponse {

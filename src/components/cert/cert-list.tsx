@@ -11,7 +11,7 @@ import {
   Plus, Search, Eye, Pencil, Download, Trash2,
   Loader2, ChevronLeft, ChevronRight, AlertTriangle,
 } from 'lucide-react'
-import { certCrudApi, deployCrudApi, type CertificateDTO, type CertListParams } from '@/lib/cert-api'
+import { certCrudApi, type CertificateDTO, type CertListParams } from '@/lib/cert-api'
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants'
 import { CertImportDialog } from './cert-import-dialog'
 import { CertDetailDialog } from './cert-detail-dialog'
@@ -47,9 +47,6 @@ export function CertList() {
   const [status, setStatus] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // Deployment cert IDs (for "no deployment" warning)
-  const [deployedCertIds, setDeployedCertIds] = useState<Set<number>>(new Set())
-
   // Dialogs
   const [importOpen, setImportOpen] = useState(false)
   const [detailCert, setDetailCert] = useState<CertificateDTO | null>(null)
@@ -83,14 +80,6 @@ export function CertList() {
   useEffect(() => {
     fetchList()
   }, [fetchList])
-
-  // Load deployment cert IDs for warnings
-  useEffect(() => {
-    deployCrudApi.list({ page_size: 500 }).then(resp => {
-      const ids = new Set((resp.data?.items ?? []).map(d => d.certificate_id))
-      setDeployedCertIds(ids)
-    }).catch(() => {})
-  }, [])
 
   // Search debounce
   const [searchInput, setSearchInput] = useState('')
@@ -247,7 +236,7 @@ export function CertList() {
                               <AlertTriangle className="h-3 w-3" />
                             </span>
                           )}
-                          {cert.status === 'active' && !deployedCertIds.has(cert.id) && (
+                          {cert.status === 'active' && cert.deployment_count === 0 && (
                             <span className="text-muted-foreground" title={cl.warnNoDeployment}>
                               <AlertTriangle className="h-3 w-3" />
                             </span>
